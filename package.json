@@ -5,7 +5,8 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "electron .",
-		"dist": "electron-builder --win"
+		"dist": "electron-builder --win",
+		"dist:publish": "electron-builder --win --publish always"
 	},
 	"keywords": [],
 	"author": "",
