@@ -5,86 +5,190 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>API 탭 매니저</title>
 		<link rel="stylesheet" href="./style.css" />
+		<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
 	</head>
 	<body>
 		<div class="app-shell">
 			<header class="app-header">
 				<div>
-					<h1>API 탭 매니저 입니다</h1>
-					<p>Title / URL / JSON 데이터를 입력하고 탭으로 전환해 확인하세요.</p>
+					<h1>API 탭 매니저</h1>
+					<p>API 요청을 생성하고 관리하세요.</p>
 				</div>
 			</header>
 
-			<section class="entry-form">
-				<form id="entryForm">
-					<div class="field">
-						<label for="titleInput">Title</label>
-						<input id="titleInput" type="text" placeholder="예) 사용자 조회" required />
+			<div class="main-layout">
+				<aside class="sidebar">
+					<div class="sidebar-header">
+						<h2>요청 목록</h2>
+						<button id="newRequestBtn" type="button" class="new-request-btn" title="새 요청 추가">+</button>
 					</div>
-					<div class="field">
-						<label for="methodSelect">Method</label>
-						<select id="methodSelect" required>
-							<option value="GET">GET</option>
-							<option value="POST">POST</option>
-							<option value="PUT">PUT</option>
-							<option value="PATCH">PATCH</option>
-							<option value="DELETE">DELETE</option>
-						</select>
+					<div id="requestList" class="request-list"></div>
+					<div id="emptyState" class="empty-state hidden">아직 저장된 항목이 없습니다.</div>
+					<div class="sidebar-footer">
+						<button id="clearButton" type="button" class="ghost-btn">전체 삭제</button>
 					</div>
-					<div class="field">
-						<label for="urlInput">URL</label>
-						<input id="urlInput" type="url" placeholder="https://api.example.com/users" required />
-					</div>
-					<div class="field">
-						<label>Headers</label>
-						<div id="headersList" class="headers-list"></div>
-						<button type="button" id="addHeaderBtn" class="ghost-btn slim-btn" aria-label="헤더 추가">
-							헤더 추가
-						</button>
-						<small class="help-text">Key/Value 쌍으로 입력하고 필요 없는 항목은 삭제하세요.</small>
-					</div>
-					<div class="field">
-						<label for="apiKeyInput">API Key</label>
-						<input id="apiKeyInput" type="text" placeholder="예) sk_live_xxx" />
-						<small class="help-text">전송 시 기본 `X-API-Key` 헤더로 포함됩니다.</small>
-					</div>
-					<div class="field">
-						<label for="jsonInput">Json-data</label>
-						<textarea id="jsonInput" rows="6" placeholder='{"userId":123}' required></textarea>
-					</div>
-					<button type="submit" class="primary-btn">추가</button>
-				</form>
-			</section>
+				</aside>
 
-			<section class="tabs-area">
-				<div class="tabs-toolbar">
-					<h2>저장된 API</h2>
-					<button id="clearButton" type="button" class="ghost-btn">전체 삭제</button>
-				</div>
-				<div id="tabList" class="tab-list"></div>
-				<div id="emptyState" class="empty-state hidden">아직 저장된 항목이 없습니다.</div>
-				<div id="tabDetails" class="tab-details hidden"></div>
-			</section>
+				<main class="main-content">
+					<section class="entry-form hidden" id="entryFormSection">
+						<form id="entryForm">
+							<div class="field">
+								<label for="titleInput">Title</label>
+								<input id="titleInput" type="text" placeholder="예) 사용자 조회" required />
+							</div>
+							<div class="field">
+								<label for="methodSelect">Method</label>
+								<select id="methodSelect" required>
+									<option value="GET">GET</option>
+									<option value="POST">POST</option>
+									<option value="PUT">PUT</option>
+									<option value="PATCH">PATCH</option>
+									<option value="DELETE">DELETE</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="urlInput">URL</label>
+								<input id="urlInput" type="url" placeholder="https://api.example.com/users" required />
+							</div>
+							<div class="field">
+								<label>Headers</label>
+								<div id="headersList" class="headers-list"></div>
+								<button type="button" id="addHeaderBtn" class="ghost-btn slim-btn" aria-label="헤더 추가">
+									헤더 추가
+								</button>
+								<small class="help-text">Key/Value 쌍으로 입력하고 필요 없는 항목은 삭제하세요.</small>
+							</div>
+							<div class="field">
+								<label for="apiKeyInput">API Key</label>
+								<input id="apiKeyInput" type="text" placeholder="예) sk_live_xxx" />
+								<small class="help-text">전송 시 기본 `X-API-Key` 헤더로 포함됩니다.</small>
+							</div>
+					<div class="field">
+						<div class="json-label-container">
+							<label for="jsonInput">Json-data</label>
+							<button type="button" id="formatJsonInputBtn" class="format-json-btn" title="JSON 포맷팅 (Ctrl+Shift+F)">포맷</button>
+						</div>
+						<div id="jsonInput" class="monaco-editor-container"></div>
+					</div>
+							<button type="submit" class="primary-btn">추가</button>
+						</form>
+					</section>
+
+					<div id="tabDetails" class="tab-details hidden">
+						<!-- 동적으로 생성됨 -->
+					</div>
+				</main>
+			</div>
 		</div>
 
 		<script>
 			(() => {
+				// Monaco Editor 초기화
+				let monacoEditorInstances = {};
+				let monacoLoaded = false;
+
+				const initMonacoEditor = async (containerId, initialValue = '') => {
+					return new Promise((resolve) => {
+						// Monaco가 이미 로드되었는지 확인
+						if (typeof monaco !== 'undefined' && monaco.editor) {
+							createEditorInstance(containerId, initialValue, resolve);
+							return;
+						}
+
+						// Monaco 로드
+						if (!monacoLoaded) {
+							monacoLoaded = true;
+							// Electron 환경에서 require 충돌 방지
+							const loaderScript = document.createElement('script');
+							loaderScript.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js';
+							loaderScript.onload = () => {
+								// require를 별도 변수로 저장 (Electron의 require와 충돌 방지)
+								const requireMonaco = window.require || require;
+								requireMonaco.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+								requireMonaco(['vs/editor/editor.main'], () => {
+									createEditorInstance(containerId, initialValue, resolve);
+								});
+							};
+							document.head.appendChild(loaderScript);
+						} else {
+							// 이미 로딩 중이면 대기
+							const checkMonaco = setInterval(() => {
+								if (typeof monaco !== 'undefined' && monaco.editor) {
+									clearInterval(checkMonaco);
+									createEditorInstance(containerId, initialValue, resolve);
+								}
+							}, 100);
+						}
+					});
+				};
+
+				const createEditorInstance = (containerId, initialValue, resolve) => {
+					const container = document.getElementById(containerId);
+					if (!container) {
+						resolve(null);
+						return;
+					}
+
+					// 기존 인스턴스가 있으면 제거
+					if (monacoEditorInstances[containerId]) {
+						monacoEditorInstances[containerId].dispose();
+					}
+
+					const editor = monaco.editor.create(container, {
+						value: initialValue,
+						language: 'json',
+						theme: 'vs',
+						automaticLayout: true,
+						minimap: { enabled: false },
+						scrollBeyondLastLine: false,
+						fontSize: 13,
+						fontFamily: "'Courier New', monospace",
+						wordWrap: 'on',
+						formatOnPaste: true,
+						formatOnType: true,
+						tabSize: 4,
+						insertSpaces: true,
+					});
+
+					// 포맷 단축키
+					editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF, () => {
+						editor.getAction('editor.action.formatDocument').run();
+					});
+
+					monacoEditorInstances[containerId] = editor;
+					resolve(editor);
+				};
+
+				const getMonacoValue = (containerId) => {
+					const editor = monacoEditorInstances[containerId];
+					return editor ? editor.getValue() : '';
+				};
+
+				const setMonacoValue = (containerId, value) => {
+					const editor = monacoEditorInstances[containerId];
+					if (editor) {
+						editor.setValue(value || '');
+					}
+				};
+
 				const STORAGE_KEY = 'apiProgramEntries';
 
 				const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
 				const form = document.getElementById('entryForm');
-				const tabList = document.getElementById('tabList');
+				const requestList = document.getElementById('requestList');
 				const details = document.getElementById('tabDetails');
 				const emptyState = document.getElementById('emptyState');
 				const clearButton = document.getElementById('clearButton');
+				const newRequestBtn = document.getElementById('newRequestBtn');
+				const entryFormSection = document.getElementById('entryFormSection');
 				const titleInput = document.getElementById('titleInput');
 				const methodSelect = document.getElementById('methodSelect');
 				const urlInput = document.getElementById('urlInput');
 				const apiKeyInput = document.getElementById('apiKeyInput');
 				const headersList = document.getElementById('headersList');
 				const addHeaderBtn = document.getElementById('addHeaderBtn');
-				const jsonInput = document.getElementById('jsonInput');
+				const jsonInputContainer = document.getElementById('jsonInput');
 				const responseCache = {};
 
 				const headersArrayToObject = (list = []) => {
@@ -221,41 +325,46 @@
 				};
 
 				const renderTabs = () => {
-					tabList.innerHTML = '';
+					requestList.innerHTML = '';
 
 					if (!entries.length) {
-						tabList.classList.add('hidden');
+						requestList.classList.add('hidden');
 						emptyState.classList.remove('hidden');
 						details.classList.add('hidden');
+						entryFormSection.classList.add('hidden');
 						return;
 					}
 
-					tabList.classList.remove('hidden');
+					requestList.classList.remove('hidden');
 					emptyState.classList.add('hidden');
+					entryFormSection.classList.add('hidden');
 
 					entries.forEach((entry) => {
-						const tabItem = document.createElement('div');
-						tabItem.className = `tab-item ${entry.id === activeId ? 'active' : ''}`;
+						const requestItem = document.createElement('div');
+						requestItem.className = `request-item ${entry.id === activeId ? 'active' : ''}`;
 
 						const button = document.createElement('button');
 						button.type = 'button';
-						button.textContent = entry.title;
-						button.className = 'tab-button';
+						button.className = 'request-button';
+						button.innerHTML = `
+							<span class="request-method">${entry.method || 'GET'}</span>
+							<span class="request-title">${entry.title}</span>
+						`;
 						button.addEventListener('click', () => setActive(entry.id));
 
 						const deleteBtn = document.createElement('button');
 						deleteBtn.type = 'button';
-						deleteBtn.className = 'tab-close';
-						deleteBtn.setAttribute('aria-label', `${entry.title} 탭 삭제`);
-						deleteBtn.textContent = 'x';
+						deleteBtn.className = 'request-close';
+						deleteBtn.setAttribute('aria-label', `${entry.title} 삭제`);
+						deleteBtn.textContent = '×';
 						deleteBtn.addEventListener('click', (event) => {
 							event.stopPropagation();
 							deleteEntry(entry.id);
 						});
 
-						tabItem.appendChild(button);
-						tabItem.appendChild(deleteBtn);
-						tabList.appendChild(tabItem);
+						requestItem.appendChild(button);
+						requestItem.appendChild(deleteBtn);
+						requestList.appendChild(requestItem);
 					});
 				};
 
@@ -391,18 +500,17 @@
 					details.classList.remove('hidden');
 					details.innerHTML = '';
 
-					const detailForm = document.createElement('form');
-					detailForm.id = 'detailForm';
+					// 요청 영역
+					const requestSection = document.createElement('div');
+					requestSection.className = 'request-section';
 
-					const detailTitle = document.createElement('input');
-					detailTitle.id = 'detailTitle';
-					detailTitle.className = 'detail-edit-input';
-					detailTitle.value = current.title;
-					detailTitle.required = true;
+					// 상단: Method + URL + Send 버튼 (Postman 스타일)
+					const requestBar = document.createElement('div');
+					requestBar.className = 'request-bar';
 
 					const detailMethod = document.createElement('select');
 					detailMethod.id = 'detailMethod';
-					detailMethod.className = 'detail-edit-select';
+					detailMethod.className = 'request-method-select';
 					HTTP_METHODS.forEach((method) => {
 						const option = document.createElement('option');
 						option.value = method;
@@ -415,9 +523,62 @@
 					const detailUrl = document.createElement('input');
 					detailUrl.id = 'detailUrl';
 					detailUrl.type = 'url';
-					detailUrl.className = 'detail-edit-input';
+					detailUrl.className = 'request-url-input';
 					detailUrl.value = current.url;
 					detailUrl.required = true;
+					detailUrl.placeholder = 'https://api.example.com/users';
+
+					const sendBtn = document.createElement('button');
+					sendBtn.type = 'button';
+					sendBtn.className = 'send-button';
+					sendBtn.textContent = 'Send';
+
+					requestBar.appendChild(detailMethod);
+					requestBar.appendChild(detailUrl);
+					requestBar.appendChild(sendBtn);
+
+					// 탭 영역
+					const tabsContainer = document.createElement('div');
+					tabsContainer.className = 'tabs-container';
+
+					const tabsNav = document.createElement('div');
+					tabsNav.className = 'tabs-nav';
+
+					const paramsTab = document.createElement('button');
+					paramsTab.type = 'button';
+					paramsTab.className = 'tab-nav-item';
+					paramsTab.textContent = 'Params';
+					paramsTab.dataset.tab = 'params';
+
+					const headersTab = document.createElement('button');
+					headersTab.type = 'button';
+					headersTab.className = 'tab-nav-item active';
+					headersTab.textContent = 'Headers';
+					headersTab.dataset.tab = 'headers';
+
+					const bodyTab = document.createElement('button');
+					bodyTab.type = 'button';
+					bodyTab.className = 'tab-nav-item';
+					bodyTab.textContent = 'Body';
+					bodyTab.dataset.tab = 'body';
+
+					tabsNav.appendChild(paramsTab);
+					tabsNav.appendChild(headersTab);
+					tabsNav.appendChild(bodyTab);
+
+					const tabsContent = document.createElement('div');
+					tabsContent.className = 'tabs-content';
+
+					// Params 탭 (현재는 비어있음)
+					const paramsPanel = document.createElement('div');
+					paramsPanel.className = 'tab-panel hidden';
+					paramsPanel.id = 'tab-panel-params';
+					paramsPanel.innerHTML = '<p class="tab-placeholder">Params 기능은 추후 추가 예정입니다.</p>';
+
+					// Headers 탭
+					const headersPanel = document.createElement('div');
+					headersPanel.className = 'tab-panel';
+					headersPanel.id = 'tab-panel-headers';
 
 					const detailHeaderList = document.createElement('div');
 					detailHeaderList.className = 'headers-list';
@@ -430,76 +591,125 @@
 						detailHeaderList.appendChild(createHeaderRowElement());
 					});
 
+					initHeaderList(detailHeaderList, current.headers?.length ? current.headers : parseHeadersText(current.headersText));
+
+					headersPanel.appendChild(detailHeaderList);
+					headersPanel.appendChild(detailHeaderAddBtn);
+
+					// Body 탭
+					const bodyPanel = document.createElement('div');
+					bodyPanel.className = 'tab-panel hidden';
+					bodyPanel.id = 'tab-panel-body';
+
 					const detailApiKey = document.createElement('input');
 					detailApiKey.id = 'detailApiKey';
 					detailApiKey.type = 'text';
 					detailApiKey.className = 'detail-edit-input';
 					detailApiKey.value = current.apiKey || '';
+					detailApiKey.placeholder = 'API Key (예: sk_live_xxx)';
 
-					const detailJson = document.createElement('textarea');
-					detailJson.id = 'detailJson';
-					detailJson.className = 'detail-edit-textarea';
-					detailJson.rows = 8;
-					detailJson.value = current.jsonData;
-					detailJson.required = true;
-					enableTabInsert(detailJson);
+					const apiKeyLabel = document.createElement('label');
+					apiKeyLabel.textContent = 'API Key';
+					apiKeyLabel.setAttribute('for', 'detailApiKey');
+					apiKeyLabel.className = 'field-label';
 
-					const syncFields = () => {
-						detailTitle.value = current.title;
-						detailMethod.value = current.method || 'GET';
-						detailUrl.value = current.url;
-						detailApiKey.value = current.apiKey || '';
-						detailJson.value = current.jsonData;
-						initHeaderList(detailHeaderList, current.headers?.length ? current.headers : parseHeadersText(current.headersText));
+					const detailJsonContainer = document.createElement('div');
+					detailJsonContainer.id = 'detailJson';
+					detailJsonContainer.className = 'monaco-editor-container';
+					detailJsonContainer.style.height = '300px';
+
+					const jsonLabelContainer = document.createElement('div');
+					jsonLabelContainer.className = 'json-label-container';
+					const jsonLabel = document.createElement('label');
+					jsonLabel.textContent = 'JSON Data';
+					jsonLabel.setAttribute('for', 'detailJson');
+					jsonLabel.className = 'field-label';
+
+					const formatJsonBtn = document.createElement('button');
+					formatJsonBtn.type = 'button';
+					formatJsonBtn.className = 'format-json-btn';
+					formatJsonBtn.textContent = '포맷';
+					formatJsonBtn.title = 'JSON 포맷팅 (Ctrl+Shift+F)';
+					formatJsonBtn.addEventListener('click', async () => {
+						const editor = monacoEditorInstances['detailJson'];
+						if (editor) {
+							try {
+								editor.getAction('editor.action.formatDocument').run();
+							} catch (error) {
+								alert('포맷팅 중 오류가 발생했습니다.');
+							}
+						}
+					});
+
+					jsonLabelContainer.appendChild(jsonLabel);
+					jsonLabelContainer.appendChild(formatJsonBtn);
+
+					bodyPanel.appendChild(apiKeyLabel);
+					bodyPanel.appendChild(detailApiKey);
+					bodyPanel.appendChild(jsonLabelContainer);
+					bodyPanel.appendChild(detailJsonContainer);
+
+					// Monaco Editor 초기화 (비동기)
+					setTimeout(async () => {
+						await initMonacoEditor('detailJson', current.jsonData || '');
+					}, 100);
+
+					tabsContent.appendChild(paramsPanel);
+					tabsContent.appendChild(headersPanel);
+					tabsContent.appendChild(bodyPanel);
+
+					tabsContainer.appendChild(tabsNav);
+					tabsContainer.appendChild(tabsContent);
+
+					// 탭 전환 기능
+					const switchTab = (tabName) => {
+						document.querySelectorAll('.tab-nav-item').forEach((btn) => btn.classList.remove('active'));
+						document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.add('hidden'));
+						document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+						document.getElementById(`tab-panel-${tabName}`).classList.remove('hidden');
 					};
 
-					const actions = document.createElement('div');
-					actions.className = 'detail-actions';
+					paramsTab.addEventListener('click', () => switchTab('params'));
+					headersTab.addEventListener('click', () => switchTab('headers'));
+					bodyTab.addEventListener('click', () => switchTab('body'));
 
-					const sendBtn = document.createElement('button');
-					sendBtn.type = 'button';
-					sendBtn.className = 'ghost-btn secondary-btn';
-					sendBtn.textContent = '전송';
+					// Title 입력 (상단에 작게 표시)
+					const titleBar = document.createElement('div');
+					titleBar.className = 'title-bar';
+
+					const detailTitle = document.createElement('input');
+					detailTitle.id = 'detailTitle';
+					detailTitle.className = 'title-input';
+					detailTitle.value = current.title;
+					detailTitle.required = true;
+					detailTitle.placeholder = '요청 이름';
 
 					const saveBtn = document.createElement('button');
-					saveBtn.type = 'submit';
-					saveBtn.className = 'primary-btn';
-					saveBtn.textContent = '변경 저장';
+					saveBtn.type = 'button';
+					saveBtn.className = 'save-button';
+					saveBtn.textContent = '저장';
 
-					const resetBtn = document.createElement('button');
-					resetBtn.type = 'button';
-					resetBtn.className = 'ghost-btn secondary-btn';
-					resetBtn.textContent = '되돌리기';
-					resetBtn.addEventListener('click', syncFields);
+					titleBar.appendChild(detailTitle);
+					titleBar.appendChild(saveBtn);
 
-					actions.appendChild(sendBtn);
-					actions.appendChild(resetBtn);
-					actions.appendChild(saveBtn);
+					requestSection.appendChild(titleBar);
+					requestSection.appendChild(requestBar);
+					requestSection.appendChild(tabsContainer);
 
-					detailForm.appendChild(buildEditableRow('Title', detailTitle));
-					detailForm.appendChild(buildEditableRow('Method', detailMethod));
-					detailForm.appendChild(buildEditableRow('URL', detailUrl));
-					const headersSection = document.createElement('div');
-					headersSection.className = 'detail-row column editable headers-field';
+					// 응답 영역
+					const responsePanel = document.createElement('section');
+					responsePanel.className = 'response-panel';
+					const responseTitle = document.createElement('h3');
+					responseTitle.textContent = '응답';
+					const responseContent = document.createElement('div');
+					responseContent.className = 'response-content';
+					responsePanel.appendChild(responseTitle);
+					responsePanel.appendChild(responseContent);
 
-					const headersLabel = document.createElement('p');
-					headersLabel.className = 'detail-label';
-					headersLabel.textContent = 'Headers';
+					renderResponseBox(responseContent, responseCache[current.id]);
 
-					initHeaderList(detailHeaderList, current.headers?.length ? current.headers : parseHeadersText(current.headersText));
-
-					headersSection.appendChild(headersLabel);
-					headersSection.appendChild(detailHeaderList);
-					headersSection.appendChild(detailHeaderAddBtn);
-
-					detailForm.appendChild(headersSection);
-					detailForm.appendChild(buildEditableRow('API Key', detailApiKey));
-					detailForm.appendChild(buildEditableRow('Json-data', detailJson));
-					detailForm.appendChild(actions);
-
-					detailForm.addEventListener('submit', (event) => {
-						event.preventDefault();
-
+					// 저장 기능
+					const saveRequest = () => {
 						const updated = {
 							...current,
 							title: detailTitle.value.trim(),
@@ -507,11 +717,11 @@
 							url: detailUrl.value.trim(),
 							headers: collectHeaderRows(detailHeaderList),
 							apiKey: detailApiKey.value.trim(),
-							jsonData: detailJson.value.trim(),
+							jsonData: getMonacoValue('detailJson').trim(),
 						};
 
 						if (!updated.title || !updated.method || !updated.url || !updated.jsonData) {
-							alert('모든 필드를 입력해주세요.');
+							alert('모든 필수를 입력해주세요.');
 							return;
 						}
 
@@ -521,19 +731,11 @@
 						entries = entries.map((entry) => (entry.id === updated.id ? updated : entry));
 						persistEntries();
 						setActive(updated.id);
-					});
+					};
 
-					const responsePanel = document.createElement('section');
-					responsePanel.className = 'response-panel';
-					const responseTitle = document.createElement('h3');
-					responseTitle.textContent = '응답 결과';
-					const responseContent = document.createElement('div');
-					responseContent.className = 'response-content';
-					responsePanel.appendChild(responseTitle);
-					responsePanel.appendChild(responseContent);
+					saveBtn.addEventListener('click', saveRequest);
 
-					renderResponseBox(responseContent, responseCache[current.id]);
-
+					// 전송 기능
 					sendBtn.addEventListener('click', () => {
 						sendRequest({
 							id: current.id,
@@ -541,60 +743,195 @@
 							url: detailUrl.value.trim(),
 							headersArray: collectHeaderRows(detailHeaderList),
 							apiKey: detailApiKey.value.trim(),
-							payload: detailJson.value.trim(),
+							payload: getMonacoValue('detailJson').trim(),
 							buttonEl: sendBtn,
 							responseEl: responseContent,
 						});
 					});
 
-					details.appendChild(detailForm);
+					details.appendChild(requestSection);
 					details.appendChild(responsePanel);
 				};
 
-				const enableTabInsert = (textarea) => {
+				const enableCodeEditor = (textarea) => {
 					if (!textarea) return;
-					textarea.addEventListener('keydown', (event) => {
 
-						if (event.key === 'Tab') {
+					const TAB = '    '; // 4 spaces
+					const getLineStart = (text, pos) => {
+						let start = pos;
+						while (start > 0 && text[start - 1] !== '\n') {
+							start--;
+						}
+						return start;
+					};
+
+					const getLineEnd = (text, pos) => {
+						let end = pos;
+						while (end < text.length && text[end] !== '\n') {
+							end++;
+						}
+						return end;
+					};
+
+					const getSelectedLines = (text, start, end) => {
+						const lineStart = getLineStart(text, start);
+						const lineEnd = getLineEnd(text, end);
+						const selectedText = text.substring(lineStart, lineEnd);
+						const lines = selectedText.split('\n');
+						return { lines, lineStart, lineEnd, firstLineStart: lineStart };
+					};
+
+					const indentLines = (text, start, end, indent) => {
+						const { lines, lineStart, lineEnd } = getSelectedLines(text, start, end);
+						const indentedLines = lines.map((line, index) => {
+							if (line.trim() === '' && index < lines.length - 1) return line;
+							return indent + line;
+						});
+						const newText =
+							text.substring(0, lineStart) +
+							indentedLines.join('\n') +
+							text.substring(lineEnd);
+						const cursorOffset = indent.length;
+						return {
+							newText,
+							newStart: start + (start === lineStart ? cursorOffset : 0),
+							newEnd: end + cursorOffset * lines.length,
+						};
+					};
+
+					const unindentLines = (text, start, end) => {
+						const { lines, lineStart, lineEnd } = getSelectedLines(text, start, end);
+						let totalRemoved = 0;
+						const unindentedLines = lines.map((line, index) => {
+							if (line.trim() === '' && index < lines.length - 1) return line;
+							if (line.startsWith(TAB)) {
+								totalRemoved += TAB.length;
+								return line.substring(TAB.length);
+							}
+							if (line.startsWith(' ')) {
+								const spaces = line.match(/^ +/)?.[0] || '';
+								const toRemove = Math.min(spaces.length, 4);
+								totalRemoved += toRemove;
+								return line.substring(toRemove);
+							}
+							return line;
+						});
+						const newText =
+							text.substring(0, lineStart) +
+							unindentedLines.join('\n') +
+							text.substring(lineEnd);
+						return {
+							newText,
+							newStart: Math.max(lineStart, start - (start === lineStart ? TAB.length : 0)),
+							newEnd: Math.max(lineStart, end - totalRemoved),
+						};
+					};
+
+					textarea.addEventListener('keydown', (event) => {
+						const { selectionStart, selectionEnd, value } = textarea;
+						const isMultiLine = selectionStart !== selectionEnd;
+
+						// Tab 키: 들여쓰기
+						if (event.key === 'Tab' && !event.shiftKey) {
 							event.preventDefault();
-							const { selectionStart, selectionEnd, value } = textarea;
-							const before = value.slice(0, selectionStart);
-							const after = value.slice(selectionEnd);
-							const tabSpace = '    ';
-							const nextCursor = selectionStart + tabSpace.length;
-							textarea.value = `${before}${tabSpace}${after}`;
-							textarea.selectionStart = textarea.selectionEnd = nextCursor;
+							if (isMultiLine) {
+								// 여러 줄 선택 시 모든 줄에 들여쓰기
+								const { newText, newStart, newEnd } = indentLines(value, selectionStart, selectionEnd, TAB);
+								textarea.value = newText;
+								textarea.selectionStart = newStart;
+								textarea.selectionEnd = newEnd;
+							} else {
+								// 단일 커서: 탭 삽입
+								const before = value.slice(0, selectionStart);
+								const after = value.slice(selectionEnd);
+								const nextCursor = selectionStart + TAB.length;
+								textarea.value = `${before}${TAB}${after}`;
+								textarea.selectionStart = textarea.selectionEnd = nextCursor;
+							}
 						}
 
-						if (event.key === "Backspace") {
-							const TAB = "    "; // 4 spaces
-							const start = textarea.selectionStart;
-							const end = textarea.selectionEnd;
+						// Shift+Tab: 내어쓰기
+						if (event.key === 'Tab' && event.shiftKey) {
+							event.preventDefault();
+							if (isMultiLine) {
+								// 여러 줄 선택 시 모든 줄에서 내어쓰기
+								const { newText, newStart, newEnd } = unindentLines(value, selectionStart, selectionEnd);
+								textarea.value = newText;
+								textarea.selectionStart = newStart;
+								textarea.selectionEnd = newEnd;
+							}
+						}
 
-							// 드래그 해서 선택 삭제면 그대로 삭제 처리
-							if (start !== end) return;
+						// Enter: 자동 들여쓰기 유지
+						if (event.key === 'Enter') {
+							const before = value.substring(0, selectionStart);
+							const lineStart = getLineStart(value, selectionStart);
+							const currentLine = value.substring(lineStart, selectionStart);
+							const indentMatch = currentLine.match(/^(\s*)/);
+							const currentIndent = indentMatch ? indentMatch[1] : '';
 
-							const before = textarea.value.substring(0, start);
+							// 중괄호나 대괄호 뒤에서 Enter를 누르면 추가 들여쓰기
+							const lastChar = currentLine.trim().slice(-1);
+							const shouldIndent = lastChar === '{' || lastChar === '[';
 
-							// 직전 4글자가 공백 4칸인지 체크
-							if (before.endsWith(TAB)) {
-								event.preventDefault();
+							setTimeout(() => {
+								const newPos = textarea.selectionStart;
+								const beforeNew = textarea.value.substring(0, newPos);
+								const afterNew = textarea.value.substring(newPos);
+								const newIndent = shouldIndent ? currentIndent + TAB : currentIndent;
+								textarea.value = beforeNew + newIndent + afterNew;
+								textarea.selectionStart = textarea.selectionEnd = newPos + newIndent.length;
+							}, 0);
+						}
 
-								textarea.value =
-								textarea.value.substring(0, start - TAB.length) +
-								textarea.value.substring(end);
-
-								textarea.selectionStart = textarea.selectionEnd = start - TAB.length;
+						// Backspace: 탭 단위로 삭제
+						if (event.key === 'Backspace') {
+							if (selectionStart === selectionEnd) {
+								const before = value.substring(0, selectionStart);
+								if (before.endsWith(TAB)) {
+									event.preventDefault();
+									textarea.value =
+										value.substring(0, selectionStart - TAB.length) +
+										value.substring(selectionEnd);
+									textarea.selectionStart = textarea.selectionEnd = selectionStart - TAB.length;
+								}
 							}
 						}
 					});
 				};
 
-				enableTabInsert(jsonInput);
+				// 새 요청 폼의 Monaco Editor 초기화
+				const formatJsonInputBtn = document.getElementById('formatJsonInputBtn');
+				if (formatJsonInputBtn) {
+					formatJsonInputBtn.addEventListener('click', async () => {
+						const editor = monacoEditorInstances['jsonInput'];
+						if (editor) {
+							try {
+								editor.getAction('editor.action.formatDocument').run();
+							} catch (error) {
+								alert('포맷팅 중 오류가 발생했습니다.');
+							}
+						}
+					});
+				}
+
+				// 페이지 로드 후 Monaco Editor 초기화
+				window.addEventListener('DOMContentLoaded', async () => {
+					await initMonacoEditor('jsonInput', '');
+				});
+
+				newRequestBtn.addEventListener('click', () => {
+					entryFormSection.classList.remove('hidden');
+					details.classList.add('hidden');
+					requestList.classList.add('hidden');
+					emptyState.classList.add('hidden');
+					titleInput.focus();
+				});
 
 				const resetForm = () => {
 					form.reset();
 					initHeaderList(headersList);
+					setMonacoValue('jsonInput', '');
 					titleInput.focus();
 				};
 
@@ -607,7 +944,7 @@
 					const headers = collectHeaderRows(headersList);
 					const headersText = serializeHeaders(headers);
 					const apiKey = apiKeyInput.value.trim();
-					const jsonData = jsonInput.value.trim();
+					const jsonData = getMonacoValue('jsonInput').trim();
 
 					if (!title || !method || !url || !jsonData) {
 						return;
@@ -626,6 +963,7 @@
 					entries = [...entries, newEntry];
 					persistEntries();
 					resetForm();
+					entryFormSection.classList.add('hidden');
 					setActive(newEntry.id);
 				});
 
@@ -641,7 +979,7 @@
 					resetForm();
 				});
 
-				const init = () => {
+				const init = async () => {
 					entries = parseEntries().map((entry) => {
 						const normalizedHeaders = Array.isArray(entry.headers)
 							? entry.headers
@@ -658,10 +996,19 @@
 					activeId = entries[0]?.id ?? '';
 					renderTabs();
 					renderDetails();
-					titleInput.focus();
+					if (entries.length === 0) {
+						entryFormSection.classList.remove('hidden');
+						await initMonacoEditor('jsonInput', '');
+						titleInput.focus();
+					}
 				};
 
-				init();
+				// DOMContentLoaded 대신 즉시 실행
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', init);
+				} else {
+					init();
+				}
 			})();
 		</script>
 	</body>
