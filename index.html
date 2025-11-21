@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>API 탭 매니저</title>
+		<link rel="stylesheet" href="./style.css" />
+	</head>
+	<body>
+		<div class="app-shell">
+			<header class="app-header">
+				<div>
+					<h1>API 탭 매니저</h1>
+					<p>Title / URL / JSON 데이터를 입력하고 탭으로 전환해 확인하세요.</p>
+				</div>
+			</header>
+
+			<section class="entry-form">
+				<form id="entryForm">
+					<div class="field">
+						<label for="titleInput">Title</label>
+						<input id="titleInput" type="text" placeholder="예) 사용자 조회" required />
+					</div>
+					<div class="field">
+						<label for="methodSelect">Method</label>
+						<select id="methodSelect" required>
+							<option value="GET">GET</option>
+							<option value="POST">POST</option>
+							<option value="PUT">PUT</option>
+							<option value="PATCH">PATCH</option>
+							<option value="DELETE">DELETE</option>
+						</select>
+					</div>
+					<div class="field">
+						<label for="urlInput">URL</label>
+						<input id="urlInput" type="url" placeholder="https://api.example.com/users" required />
+					</div>
+					<div class="field">
+						<label>Headers</label>
+						<div id="headersList" class="headers-list"></div>
+						<button type="button" id="addHeaderBtn" class="ghost-btn slim-btn" aria-label="헤더 추가">
+							헤더 추가
+						</button>
+						<small class="help-text">Key/Value 쌍으로 입력하고 필요 없는 항목은 삭제하세요.</small>
+					</div>
+					<div class="field">
+						<label for="apiKeyInput">API Key</label>
+						<input id="apiKeyInput" type="text" placeholder="예) sk_live_xxx" />
+						<small class="help-text">전송 시 기본 `X-API-Key` 헤더로 포함됩니다.</small>
+					</div>
+					<div class="field">
+						<label for="jsonInput">Json-data</label>
+						<textarea id="jsonInput" rows="6" placeholder='{"userId":123}' required></textarea>
+					</div>
+					<button type="submit" class="primary-btn">추가</button>
+				</form>
+			</section>
+
+			<section class="tabs-area">
+				<div class="tabs-toolbar">
+					<h2>저장된 API</h2>
+					<button id="clearButton" type="button" class="ghost-btn">전체 삭제</button>
+				</div>
+				<div id="tabList" class="tab-list"></div>
+				<div id="emptyState" class="empty-state hidden">아직 저장된 항목이 없습니다.</div>
+				<div id="tabDetails" class="tab-details hidden"></div>
+			</section>
+		</div>
+
+		<script>
+			(() => {
+				const STORAGE_KEY = 'apiProgramEntries';
+
+				const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+
+				const form = document.getElementById('entryForm');
+				const tabList = document.getElementById('tabList');
+				const details = document.getElementById('tabDetails');
+				const emptyState = document.getElementById('emptyState');
+				const clearButton = document.getElementById('clearButton');
+				const titleInput = document.getElementById('titleInput');
+				const methodSelect = document.getElementById('methodSelect');
+				const urlInput = document.getElementById('urlInput');
+				const apiKeyInput = document.getElementById('apiKeyInput');
+				const headersList = document.getElementById('headersList');
+				const addHeaderBtn = document.getElementById('addHeaderBtn');
+				const jsonInput = document.getElementById('jsonInput');
+				const responseCache = {};
+
+				const headersArrayToObject = (list = []) => {
+					return list.reduce((acc, { key, value }) => {
+						if (key) {
+							acc[key] = value ?? '';
+						}
+						return acc;
+					}, {});
+				};
+
+				const serializeHeaders = (list = []) => {
+					const obj = headersArrayToObject(list);
+					const keys = Object.keys(obj);
+					return keys.length ? JSON.stringify(obj) : '';
+				};
+
+				const parseHeadersText = (text = '') => {
+					if (!text || !text.trim()) return [];
+					try {
+						const parsed = JSON.parse(text);
+						if (Array.isArray(parsed)) {
+							return parsed
+								.map((item) => ({
+									key: item.key ?? '',
+									value: item.value ?? '',
+								}))
+								.filter(({ key, value }) => key || value);
+						}
+						if (typeof parsed === 'object' && parsed !== null) {
+							return Object.entries(parsed).map(([key, value]) => ({
+								key,
+								value: String(value ?? ''),
+							}));
+						}
+					} catch (_) {
+						console.warn('Headers 문자열 파싱 실패', text);
+					}
+					return [];
+				};
+
+				const createHeaderRowElement = ({ key = '', value = '' } = {}) => {
+					const row = document.createElement('div');
+					row.className = 'header-row';
+
+					const keyInput = document.createElement('input');
+					keyInput.type = 'text';
+					keyInput.placeholder = 'Key';
+					keyInput.value = key;
+					keyInput.className = 'header-key';
+
+					const valueInput = document.createElement('input');
+					valueInput.type = 'text';
+					valueInput.placeholder = 'Value';
+					valueInput.value = value;
+					valueInput.className = 'header-value';
+
+					const removeBtn = document.createElement('button');
+					removeBtn.type = 'button';
+					removeBtn.className = 'ghost-btn icon-btn';
+					removeBtn.textContent = '×';
+					removeBtn.setAttribute('aria-label', '헤더 삭제');
+					removeBtn.addEventListener('click', () => {
+						row.remove();
+						if (!row.parentElement?.querySelector('.header-row')) {
+							row.parentElement?.appendChild(createHeaderRowElement());
+						}
+					});
+
+					row.appendChild(keyInput);
+					row.appendChild(valueInput);
+					row.appendChild(removeBtn);
+					return row;
+				};
+
+				const initHeaderList = (container, rows = []) => {
+					container.innerHTML = '';
+					const safeRows = rows.length ? rows : [{}];
+					safeRows.forEach((row) => container.appendChild(createHeaderRowElement(row)));
+				};
+
+				const collectHeaderRows = (container) => {
+					return Array.from(container.querySelectorAll('.header-row'))
+						.map((row) => ({
+							key: row.querySelector('.header-key').value.trim(),
+							value: row.querySelector('.header-value').value.trim(),
+						}))
+						.filter(({ key, value }) => key || value);
+				};
+
+				initHeaderList(headersList);
+				addHeaderBtn.addEventListener('click', () => {
+					headersList.appendChild(createHeaderRowElement());
+				});
+
+				let entries = [];
+				let activeId = '';
+
+				const generateId = () => {
+					return typeof crypto !== 'undefined' && crypto.randomUUID
+						? crypto.randomUUID()
+						: `entry-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+				};
+
+				const parseEntries = () => {
+					try {
+						const raw = localStorage.getItem(STORAGE_KEY);
+						return raw ? JSON.parse(raw) : [];
+					} catch (err) {
+						console.error('localStorage 파싱 오류', err);
+						return [];
+					}
+				};
+
+				const persistEntries = () => {
+					localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+				};
+
+				const setActive = (id) => {
+					activeId = id;
+					renderTabs();
+					renderDetails();
+				};
+
+				const deleteEntry = (id) => {
+					entries = entries.filter((entry) => entry.id !== id);
+					activeId = activeId === id ? entries[0]?.id ?? '' : activeId;
+					persistEntries();
+					renderTabs();
+					renderDetails();
+					if (!entries.length) {
+						resetForm();
+					}
+				};
+
+				const renderTabs = () => {
+					tabList.innerHTML = '';
+
+					if (!entries.length) {
+						tabList.classList.add('hidden');
+						emptyState.classList.remove('hidden');
+						details.classList.add('hidden');
+						return;
+					}
+
+					tabList.classList.remove('hidden');
+					emptyState.classList.add('hidden');
+
+					entries.forEach((entry) => {
+						const tabItem = document.createElement('div');
+						tabItem.className = `tab-item ${entry.id === activeId ? 'active' : ''}`;
+
+						const button = document.createElement('button');
+						button.type = 'button';
+						button.textContent = entry.title;
+						button.className = 'tab-button';
+						button.addEventListener('click', () => setActive(entry.id));
+
+						const deleteBtn = document.createElement('button');
+						deleteBtn.type = 'button';
+						deleteBtn.className = 'tab-close';
+						deleteBtn.setAttribute('aria-label', `${entry.title} 탭 삭제`);
+						deleteBtn.textContent = 'x';
+						deleteBtn.addEventListener('click', (event) => {
+							event.stopPropagation();
+							deleteEntry(entry.id);
+						});
+
+						tabItem.appendChild(button);
+						tabItem.appendChild(deleteBtn);
+						tabList.appendChild(tabItem);
+					});
+				};
+
+				const buildEditableRow = (labelText, inputEl) => {
+					const wrapper = document.createElement('div');
+					wrapper.className = 'detail-row column editable';
+
+					const label = document.createElement('label');
+					label.textContent = labelText;
+					label.setAttribute('for', inputEl.id);
+
+					wrapper.appendChild(label);
+					wrapper.appendChild(inputEl);
+					return wrapper;
+				};
+
+				const renderResponseBox = (container, response) => {
+					if (!response) {
+						container.innerHTML = '<p class="response-empty">아직 전송 결과가 없습니다.</p>';
+						return;
+					}
+
+					const { status, ok, timestamp, headers, body, error } = response;
+					const statusClass = ok ? 'status-badge success' : 'status-badge error';
+
+					const headerEntries = Object.entries(headers || {});
+					const headerHtml = headerEntries.length
+						? `<div class="response-headers"><h4>Headers</h4><pre>${headerEntries
+								.map(([key, value]) => `${key}: ${value}`)
+								.join('\n')}</pre></div>`
+						: '';
+
+					const bodyHtml = body
+						? `<div class="response-body"><h4>Body</h4><pre>${body}</pre></div>`
+						: '';
+
+					const errorHtml = error ? `<p class="response-error">${error}</p>` : '';
+
+					container.innerHTML = `
+						<div class="response-meta">
+							<span class="${statusClass}">${status}</span>
+							<span>${new Date(timestamp).toLocaleString()}</span>
+						</div>
+						${errorHtml}
+						${headerHtml}
+						${bodyHtml}
+					`;
+				};
+
+				const sendRequest = async ({ id, method, url, headersArray = [], apiKey, payload, buttonEl, responseEl }) => {
+					if (!url) {
+						alert('URL을 입력해주세요.');
+						return;
+					}
+
+					buttonEl.disabled = true;
+					const originalText = buttonEl.textContent;
+					buttonEl.textContent = '전송 중...';
+
+					const headers = headersArrayToObject(headersArray);
+					if (apiKey && !headers['X-API-Key']) {
+						headers['X-API-Key'] = apiKey;
+					}
+					const options = {
+						method,
+						headers,
+					};
+
+					if (!['GET', 'HEAD'].includes(method)) {
+						let parsedBody = payload;
+						try {
+							parsedBody = payload ? JSON.stringify(JSON.parse(payload)) : '';
+						} catch (error) {
+							alert('Json-data 형식이 올바르지 않습니다.');
+							buttonEl.disabled = false;
+							buttonEl.textContent = originalText;
+							return;
+						}
+
+						options.body = parsedBody || '';
+						if (parsedBody && !headers['Content-Type']) {
+							headers['Content-Type'] = 'application/json';
+						}
+					}
+
+					try {
+						const response = await fetch(url, options);
+						const text = await response.text();
+						let prettyBody = text;
+						try {
+							prettyBody = JSON.stringify(JSON.parse(text), null, 2);
+						} catch (_) {
+							// keep raw text
+						}
+
+						const collectedHeaders = {};
+						response.headers.forEach((value, key) => {
+							collectedHeaders[key] = value;
+						});
+
+						responseCache[id] = {
+							ok: response.ok,
+							status: `${response.status} ${response.statusText}`,
+							timestamp: Date.now(),
+							headers: collectedHeaders,
+							body: prettyBody,
+							error: '',
+						};
+					} catch (error) {
+						responseCache[id] = {
+							ok: false,
+							status: 'NETWORK ERROR',
+							timestamp: Date.now(),
+							headers: {},
+							body: '',
+							error: error.message || '요청 중 오류가 발생했습니다.',
+						};
+					} finally {
+						buttonEl.disabled = false;
+						buttonEl.textContent = originalText;
+						renderResponseBox(responseEl, responseCache[id]);
+					}
+				};
+
+				const renderDetails = () => {
+					const current = entries.find((entry) => entry.id === activeId);
+
+					if (!current) {
+						details.classList.add('hidden');
+						return;
+					}
+
+					details.classList.remove('hidden');
+					details.innerHTML = '';
+
+					const detailForm = document.createElement('form');
+					detailForm.id = 'detailForm';
+
+					const detailTitle = document.createElement('input');
+					detailTitle.id = 'detailTitle';
+					detailTitle.className = 'detail-edit-input';
+					detailTitle.value = current.title;
+					detailTitle.required = true;
+
+					const detailMethod = document.createElement('select');
+					detailMethod.id = 'detailMethod';
+					detailMethod.className = 'detail-edit-select';
+					HTTP_METHODS.forEach((method) => {
+						const option = document.createElement('option');
+						option.value = method;
+						option.textContent = method;
+						detailMethod.appendChild(option);
+					});
+					detailMethod.value = current.method || 'GET';
+					detailMethod.required = true;
+
+					const detailUrl = document.createElement('input');
+					detailUrl.id = 'detailUrl';
+					detailUrl.type = 'url';
+					detailUrl.className = 'detail-edit-input';
+					detailUrl.value = current.url;
+					detailUrl.required = true;
+
+					const detailHeaderList = document.createElement('div');
+					detailHeaderList.className = 'headers-list';
+
+					const detailHeaderAddBtn = document.createElement('button');
+					detailHeaderAddBtn.type = 'button';
+					detailHeaderAddBtn.className = 'ghost-btn slim-btn';
+					detailHeaderAddBtn.textContent = '헤더 추가';
+					detailHeaderAddBtn.addEventListener('click', () => {
+						detailHeaderList.appendChild(createHeaderRowElement());
+					});
+
+					const detailApiKey = document.createElement('input');
+					detailApiKey.id = 'detailApiKey';
+					detailApiKey.type = 'text';
+					detailApiKey.className = 'detail-edit-input';
+					detailApiKey.value = current.apiKey || '';
+
+					const detailJson = document.createElement('textarea');
+					detailJson.id = 'detailJson';
+					detailJson.className = 'detail-edit-textarea';
+					detailJson.rows = 8;
+					detailJson.value = current.jsonData;
+					detailJson.required = true;
+					enableTabInsert(detailJson);
+
+					const syncFields = () => {
+						detailTitle.value = current.title;
+						detailMethod.value = current.method || 'GET';
+						detailUrl.value = current.url;
+						detailApiKey.value = current.apiKey || '';
+						detailJson.value = current.jsonData;
+						initHeaderList(detailHeaderList, current.headers?.length ? current.headers : parseHeadersText(current.headersText));
+					};
+
+					const actions = document.createElement('div');
+					actions.className = 'detail-actions';
+
+					const sendBtn = document.createElement('button');
+					sendBtn.type = 'button';
+					sendBtn.className = 'ghost-btn secondary-btn';
+					sendBtn.textContent = '전송';
+
+					const saveBtn = document.createElement('button');
+					saveBtn.type = 'submit';
+					saveBtn.className = 'primary-btn';
+					saveBtn.textContent = '변경 저장';
+
+					const resetBtn = document.createElement('button');
+					resetBtn.type = 'button';
+					resetBtn.className = 'ghost-btn secondary-btn';
+					resetBtn.textContent = '되돌리기';
+					resetBtn.addEventListener('click', syncFields);
+
+					actions.appendChild(sendBtn);
+					actions.appendChild(resetBtn);
+					actions.appendChild(saveBtn);
+
+					detailForm.appendChild(buildEditableRow('Title', detailTitle));
+					detailForm.appendChild(buildEditableRow('Method', detailMethod));
+					detailForm.appendChild(buildEditableRow('URL', detailUrl));
+					const headersSection = document.createElement('div');
+					headersSection.className = 'detail-row column editable headers-field';
+
+					const headersLabel = document.createElement('p');
+					headersLabel.className = 'detail-label';
+					headersLabel.textContent = 'Headers';
+
+					initHeaderList(detailHeaderList, current.headers?.length ? current.headers : parseHeadersText(current.headersText));
+
+					headersSection.appendChild(headersLabel);
+					headersSection.appendChild(detailHeaderList);
+					headersSection.appendChild(detailHeaderAddBtn);
+
+					detailForm.appendChild(headersSection);
+					detailForm.appendChild(buildEditableRow('API Key', detailApiKey));
+					detailForm.appendChild(buildEditableRow('Json-data', detailJson));
+					detailForm.appendChild(actions);
+
+					detailForm.addEventListener('submit', (event) => {
+						event.preventDefault();
+
+						const updated = {
+							...current,
+							title: detailTitle.value.trim(),
+							method: detailMethod.value,
+							url: detailUrl.value.trim(),
+							headers: collectHeaderRows(detailHeaderList),
+							apiKey: detailApiKey.value.trim(),
+							jsonData: detailJson.value.trim(),
+						};
+
+						if (!updated.title || !updated.method || !updated.url || !updated.jsonData) {
+							alert('모든 필드를 입력해주세요.');
+							return;
+						}
+
+						const serializedHeaders = serializeHeaders(updated.headers);
+						updated.headersText = serializedHeaders;
+
+						entries = entries.map((entry) => (entry.id === updated.id ? updated : entry));
+						persistEntries();
+						setActive(updated.id);
+					});
+
+					const responsePanel = document.createElement('section');
+					responsePanel.className = 'response-panel';
+					const responseTitle = document.createElement('h3');
+					responseTitle.textContent = '응답 결과';
+					const responseContent = document.createElement('div');
+					responseContent.className = 'response-content';
+					responsePanel.appendChild(responseTitle);
+					responsePanel.appendChild(responseContent);
+
+					renderResponseBox(responseContent, responseCache[current.id]);
+
+					sendBtn.addEventListener('click', () => {
+						sendRequest({
+							id: current.id,
+							method: detailMethod.value,
+							url: detailUrl.value.trim(),
+							headersArray: collectHeaderRows(detailHeaderList),
+							apiKey: detailApiKey.value.trim(),
+							payload: detailJson.value.trim(),
+							buttonEl: sendBtn,
+							responseEl: responseContent,
+						});
+					});
+
+					details.appendChild(detailForm);
+					details.appendChild(responsePanel);
+				};
+
+				const enableTabInsert = (textarea) => {
+					if (!textarea) return;
+					textarea.addEventListener('keydown', (event) => {
+
+						if (event.key === 'Tab') {
+							event.preventDefault();
+							const { selectionStart, selectionEnd, value } = textarea;
+							const before = value.slice(0, selectionStart);
+							const after = value.slice(selectionEnd);
+							const tabSpace = '    ';
+							const nextCursor = selectionStart + tabSpace.length;
+							textarea.value = `${before}${tabSpace}${after}`;
+							textarea.selectionStart = textarea.selectionEnd = nextCursor;
+						}
+
+						if (event.key === "Backspace") {
+							const TAB = "    "; // 4 spaces
+							const start = textarea.selectionStart;
+							const end = textarea.selectionEnd;
+
+							// 드래그 해서 선택 삭제면 그대로 삭제 처리
+							if (start !== end) return;
+
+							const before = textarea.value.substring(0, start);
+
+							// 직전 4글자가 공백 4칸인지 체크
+							if (before.endsWith(TAB)) {
+								event.preventDefault();
+
+								textarea.value =
+								textarea.value.substring(0, start - TAB.length) +
+								textarea.value.substring(end);
+
+								textarea.selectionStart = textarea.selectionEnd = start - TAB.length;
+							}
+						}
+					});
+				};
+
+				enableTabInsert(jsonInput);
+
+				const resetForm = () => {
+					form.reset();
+					initHeaderList(headersList);
+					titleInput.focus();
+				};
+
+				form.addEventListener('submit', (event) => {
+					event.preventDefault();
+
+					const title = titleInput.value.trim();
+					const method = methodSelect.value;
+					const url = urlInput.value.trim();
+					const headers = collectHeaderRows(headersList);
+					const headersText = serializeHeaders(headers);
+					const apiKey = apiKeyInput.value.trim();
+					const jsonData = jsonInput.value.trim();
+
+					if (!title || !method || !url || !jsonData) {
+						return;
+					}
+
+					const newEntry = {
+						id: generateId(),
+						title,
+						method,
+						url,
+						headers,
+						headersText,
+						apiKey,
+						jsonData,
+					};
+					entries = [...entries, newEntry];
+					persistEntries();
+					resetForm();
+					setActive(newEntry.id);
+				});
+
+				clearButton.addEventListener('click', () => {
+					if (!entries.length) return;
+					const confirmed = confirm('저장된 모든 항목을 삭제할까요?');
+					if (!confirmed) return;
+					entries = [];
+					activeId = '';
+					persistEntries();
+					renderTabs();
+					renderDetails();
+					resetForm();
+				});
+
+				const init = () => {
+					entries = parseEntries().map((entry) => {
+						const normalizedHeaders = Array.isArray(entry.headers)
+							? entry.headers
+							: parseHeadersText(entry.headersText);
+						const serialized = entry.headersText || serializeHeaders(normalizedHeaders);
+						return {
+							...entry,
+							method: entry.method || 'GET',
+							headers: normalizedHeaders,
+							headersText: serialized,
+							apiKey: entry.apiKey || '',
+						};
+					});
+					activeId = entries[0]?.id ?? '';
+					renderTabs();
+					renderDetails();
+					titleInput.focus();
+				};
+
+				init();
+			})();
+		</script>
+	</body>
+</html>
