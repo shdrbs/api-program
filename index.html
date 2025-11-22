@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>API 탭 매니저</title>
+		<title>짭스트맨</title>
 		<link rel="stylesheet" href="./style.css" />
 		<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
 	</head>
@@ -11,7 +11,7 @@
 		<div class="app-shell">
 			<header class="app-header">
 				<div>
-					<h1>API 탭 매니저</h1>
+					<h1>짭스트맨</h1>
 					<p>API 요청을 생성하고 관리하세요.</p>
 				</div>
 			</header>
@@ -187,6 +187,7 @@
 				const addHeaderBtn = document.getElementById('addHeaderBtn');
 				const jsonInputContainer = document.getElementById('jsonInput');
 				const responseCache = {};
+				const requestHistory = {}; // 요청 ID별 히스토리 저장
 
 				const headersArrayToObject = (list = []) => {
 					return list.reduce((acc, { key, value }) => {
@@ -740,13 +741,175 @@
 					}
 				};
 
-				const renderResponseBox = (container, response) => {
-					if (!response) {
+				const setupHistoryClickEvents = (container, history, requestId, historyHtml) => {
+					if (!requestId || !history || history.length === 0) return;
+
+					container.querySelectorAll('.history-item').forEach((item) => {
+						item.addEventListener('click', () => {
+							const historyIndex = parseInt(item.dataset.historyIndex);
+							const historyItem = history[historyIndex];
+							if (historyItem) {
+								// 요청 데이터 표시
+								const requestHtml = `
+									<div class="request-data">
+										<h4>요청 데이터</h4>
+										<div class="request-meta">
+											<span class="request-method-badge">${historyItem.request.method}</span>
+											<span>${historyItem.request.url}</span>
+											<span>${new Date(historyItem.request.timestamp).toLocaleString()}</span>
+										</div>
+										${historyItem.request.headers ? `
+											<div class="request-headers">
+												<h5>Headers</h5>
+												<pre style="color:#000;">${Object.entries(historyItem.request.headers).map(([key, value]) => `${key}: ${value}`).join('\n')}</pre>
+											</div>
+										` : ''}
+										${historyItem.request.body ? `
+											<div class="request-body">
+												<h5>Body</h5>
+												<pre style="color:#000;">${historyItem.request.body}</pre>
+											</div>
+										` : ''}
+									</div>
+								`;
+
+								// 응답 데이터 표시
+								const responseStatusClass = historyItem.response.ok ? 'status-badge success' : 'status-badge error';
+								const responseHeaderEntries = Object.entries(historyItem.response.headers || {});
+								const responseHeaderHtml = responseHeaderEntries.length
+									? `<div class="response-headers"><h4>Headers</h4><pre>${responseHeaderEntries
+											.map(([key, value]) => `${key}: ${value}`)
+											.join('\n')}</pre></div>`
+									: '';
+
+								let responseBodyHtml = '';
+								let responseImageHtml = '';
+								let responseImages = [];
+								
+								if (historyItem.response.body) {
+									responseImages = findBase64Images(historyItem.response.body);
+									
+									if (responseImages.length > 0) {
+										responseImageHtml = '<div class="response-images"><h4>이미지</h4><div class="image-gallery">';
+										responseImages.forEach((img, idx) => {
+											responseImageHtml += `
+												<div class="image-item">
+													<img src="${img.data}" alt="Image ${idx + 1}" class="response-image" />
+													${img.path ? `<small class="image-path">${img.path}</small>` : ''}
+													<button type="button" class="download-image-btn" data-image-index="${idx}">
+														다운로드
+													</button>
+												</div>
+											`;
+										});
+										responseImageHtml += '</div></div>';
+									}
+									
+									responseBodyHtml = `<div class="response-body"><h4>Body</h4><pre>${historyItem.response.body}</pre></div>`;
+								}
+
+								const responseErrorHtml = historyItem.response.error ? `<p class="response-error">${historyItem.response.error}</p>` : '';
+
+								container.innerHTML = `
+									${historyHtml}
+									<div class="response-left">
+										${requestHtml}
+										<div class="response-meta">
+											<span class="${responseStatusClass}">${historyItem.response.status}</span>
+											<span>${new Date(historyItem.response.timestamp).toLocaleString()}</span>
+										</div>
+										${responseErrorHtml}
+										${responseHeaderHtml}
+										${responseBodyHtml}
+									</div>
+									${responseImageHtml}
+								`;
+
+								// 이미지 다운로드 버튼 이벤트 리스너 추가
+								if (responseImages.length > 0) {
+									container.querySelectorAll('.download-image-btn').forEach((btn, idx) => {
+										btn.addEventListener('click', () => {
+											const img = responseImages[idx];
+											downloadImage(img.data, img.type, idx);
+										});
+									});
+								}
+
+								// 선택된 히스토리 항목 하이라이트
+								container.querySelectorAll('.history-item').forEach((el) => {
+									el.classList.remove('active');
+								});
+								item.classList.add('active');
+
+								// 히스토리 항목 클릭 이벤트 다시 등록
+								setupHistoryClickEvents(container, history, requestId, historyHtml);
+								
+								// 히스토리 삭제 버튼 이벤트 다시 등록
+								setupHistoryDeleteEvents(container, requestId);
+							}
+						});
+					});
+				};
+				
+				const setupHistoryDeleteEvents = (container, requestId) => {
+					if (!requestId) return;
+					
+					container.querySelectorAll('.history-delete-btn').forEach((deleteBtn) => {
+						deleteBtn.addEventListener('click', (e) => {
+							e.stopPropagation(); // 클릭 이벤트 전파 방지
+							
+							const historyItem = deleteBtn.closest('.history-item');
+							if (!historyItem) return;
+							
+							const historyIndex = parseInt(historyItem.dataset.historyIndex);
+							if (isNaN(historyIndex)) return;
+							
+							// 확인 다이얼로그
+							if (!confirm('이 히스토리 항목을 삭제하시겠습니까?')) {
+								return;
+							}
+							
+							// 히스토리 배열에서 제거
+							if (requestHistory[requestId] && requestHistory[requestId][historyIndex]) {
+								requestHistory[requestId].splice(historyIndex, 1);
+								
+								// localStorage 업데이트
+								if (requestHistory[requestId].length > 0) {
+									localStorage.setItem(`requestHistory_${requestId}`, JSON.stringify(requestHistory[requestId]));
+								} else {
+									localStorage.removeItem(`requestHistory_${requestId}`);
+									delete requestHistory[requestId];
+								}
+								
+								// 화면 다시 렌더링
+								const responseContent = container.closest('.response-content') || container;
+								renderResponseBox(responseContent, responseCache[requestId], requestId);
+							}
+						});
+					});
+				};
+
+				const renderResponseBox = (container, response, requestId = null) => {
+					// 히스토리 불러오기
+					let history = [];
+					if (requestId) {
+						const savedHistory = localStorage.getItem(`requestHistory_${requestId}`);
+						if (savedHistory) {
+							try {
+								history = JSON.parse(savedHistory);
+								requestHistory[requestId] = history;
+							} catch (e) {
+								console.error('히스토리 파싱 오류', e);
+							}
+						}
+					}
+
+					if (!response && history.length === 0) {
 						container.innerHTML = '<p class="response-empty">아직 전송 결과가 없습니다.</p>';
 						return;
 					}
 
-					const { status, ok, timestamp, headers, body, error } = response;
+					const { status, ok, timestamp, headers, body, error } = response || {};
 					const statusClass = ok ? 'status-badge success' : 'status-badge error';
 
 					const headerEntries = Object.entries(headers || {});
@@ -785,11 +948,35 @@
 
 					const errorHtml = error ? `<p class="response-error">${error}</p>` : '';
 
+					// 히스토리 목록 HTML 생성
+					let historyHtml = '';
+					if (history.length > 0) {
+						historyHtml = '<div class="response-history"><h4>요청 히스토리</h4><div class="history-list">';
+						// 최신순으로 정렬
+						const sortedHistory = [...history].reverse();
+						sortedHistory.forEach((item, index) => {
+							const historyStatusClass = item.response.ok ? 'status-badge success' : 'status-badge error';
+							const historyDate = new Date(item.request.timestamp).toLocaleString();
+							historyHtml += `
+								<div class="history-item" data-history-index="${history.length - 1 - index}">
+									<div class="history-item-header">
+										<span class="${historyStatusClass}">${item.response.status}</span>
+										<span class="history-date">${historyDate}</span>
+										<span class="history-method">${item.request.method}</span>
+										<button type="button" class="history-delete-btn" aria-label="히스토리 삭제">×</button>
+									</div>
+								</div>
+							`;
+						});
+						historyHtml += '</div></div>';
+					}
+
 					container.innerHTML = `
+						${historyHtml}
 						<div class="response-left">
 							<div class="response-meta">
-								<span class="${statusClass}">${status}</span>
-								<span>${new Date(timestamp).toLocaleString()}</span>
+								<span class="${statusClass}">${status || ''}</span>
+								<span>${timestamp ? new Date(timestamp).toLocaleString() : ''}</span>
 							</div>
 							${errorHtml}
 							${headerHtml}
@@ -806,6 +993,12 @@
 								downloadImage(img.data, img.type, index);
 							});
 						});
+					}
+
+					// 히스토리 항목 클릭 이벤트 설정
+					if (history.length > 0 && requestId) {
+						setupHistoryClickEvents(container, history, requestId, historyHtml);
+						setupHistoryDeleteEvents(container, requestId);
 					}
 				};
 
@@ -913,6 +1106,15 @@
 						}
 					}
 
+					// 요청 데이터 저장
+					const requestData = {
+						method,
+						url,
+						headers: { ...headers },
+						body: options.body || null,
+						timestamp: Date.now(),
+					};
+
 					try {
 						const response = await fetch(url, options);
 						const text = await response.text();
@@ -928,7 +1130,7 @@
 							collectedHeaders[key] = value;
 						});
 
-						responseCache[id] = {
+						const responseData = {
 							ok: response.ok,
 							status: `${response.status} ${response.statusText}`,
 							timestamp: Date.now(),
@@ -936,8 +1138,25 @@
 							body: prettyBody,
 							error: '',
 						};
+
+						responseCache[id] = responseData;
+
+						// 히스토리에 저장
+						if (!requestHistory[id]) {
+							requestHistory[id] = [];
+						}
+						requestHistory[id].push({
+							request: requestData,
+							response: responseData,
+						});
+
+						// localStorage에 저장 (최대 100개)
+						if (requestHistory[id].length > 100) {
+							requestHistory[id].shift();
+						}
+						localStorage.setItem(`requestHistory_${id}`, JSON.stringify(requestHistory[id]));
 					} catch (error) {
-						responseCache[id] = {
+						const responseData = {
 							ok: false,
 							status: 'NETWORK ERROR',
 							timestamp: Date.now(),
@@ -945,10 +1164,27 @@
 							body: '',
 							error: error.message || '요청 중 오류가 발생했습니다.',
 						};
+
+						responseCache[id] = responseData;
+
+						// 히스토리에 저장 (에러도 저장)
+						if (!requestHistory[id]) {
+							requestHistory[id] = [];
+						}
+						requestHistory[id].push({
+							request: requestData,
+							response: responseData,
+						});
+
+						// localStorage에 저장 (최대 100개)
+						if (requestHistory[id].length > 100) {
+							requestHistory[id].shift();
+						}
+						localStorage.setItem(`requestHistory_${id}`, JSON.stringify(requestHistory[id]));
 					} finally {
 						buttonEl.disabled = false;
 						buttonEl.textContent = originalText;
-						renderResponseBox(responseEl, responseCache[id]);
+						renderResponseBox(responseEl, responseCache[id], id);
 					}
 				};
 
@@ -1513,7 +1749,7 @@
 					responsePanel.appendChild(responseTitle);
 					responsePanel.appendChild(responseContent);
 
-					renderResponseBox(responseContent, responseCache[current.id]);
+					renderResponseBox(responseContent, responseCache[current.id], current.id);
 
 					// 사이즈 조절 선 (resizer) 추가
 					const resizer = document.createElement('div');
