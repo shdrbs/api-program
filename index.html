@@ -1,756 +1,759 @@
 <!DOCTYPE html>
 <html lang="ko">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>짭스트맨</title>
-		<link rel="stylesheet" href="./style.css" />
-		<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
-	</head>
-	<body>
-		<div class="app-shell">
-			<header class="app-header">
-				<div>
-					<h1>짭스트맨</h1>
-					<p>API 요청을 생성하고 관리하세요.</p>
-				</div>
-			</header>
 
-			<div class="main-layout">
-				<aside class="sidebar">
-					<div class="sidebar-header">
-						<h2>요청 목록</h2>
-						<button id="newRequestBtn" type="button" class="new-request-btn" title="새 요청 추가">+</button>
-					</div>
-					<div id="requestList" class="request-list"></div>
-					<div id="emptyState" class="empty-state hidden">아직 저장된 항목이 없습니다.</div>
-					<div class="sidebar-footer">
-						<button id="clearButton" type="button" class="ghost-btn">전체 삭제</button>
-					</div>
-				</aside>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>짭스트맨</title>
+	<link rel="stylesheet" href="./style.css" />
+	<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+</head>
 
-				<main class="main-content">
-					<section class="entry-form hidden" id="entryFormSection">
-						<form id="entryForm">
-							<div class="field">
-								<label for="titleInput">Title</label>
-								<input id="titleInput" type="text" placeholder="예) 사용자 조회" required />
-							</div>
-							<div class="field">
-								<label for="methodSelect">Method</label>
-								<select id="methodSelect" required>
-									<option value="GET">GET</option>
-									<option value="POST">POST</option>
-									<option value="PUT">PUT</option>
-									<option value="PATCH">PATCH</option>
-									<option value="DELETE">DELETE</option>
-								</select>
-							</div>
-							<div class="field">
-								<label for="urlInput">URL</label>
-								<input id="urlInput" type="url" placeholder="https://api.example.com/users" required />
-							</div>
-							<div class="field">
-								<label>Headers</label>
-								<div id="headersList" class="headers-list"></div>
-								<button type="button" id="addHeaderBtn" class="ghost-btn slim-btn" aria-label="헤더 추가">
-									헤더 추가
-								</button>
-								<small class="help-text">Key/Value 쌍으로 입력하고 필요 없는 항목은 삭제하세요.</small>
-							</div>
-					<div class="field">
-						<div class="json-label-container">
-							<label for="jsonInput">Json-data</label>
-							<button type="button" id="formatJsonInputBtn" class="format-json-btn" title="JSON 포맷팅 (Ctrl+Shift+F)">포맷</button>
-						</div>
-						<div id="jsonInput" class="monaco-editor-container"></div>
-					</div>
-					<div class="form-actions">
-						<button type="button" id="cancelFormBtn" class="ghost-btn secondary-btn">취소</button>
-						<button type="submit" class="primary-btn">추가</button>
-					</div>
-						</form>
-					</section>
-
-					<div id="tabDetails" class="tab-details hidden">
-						<!-- 동적으로 생성됨 -->
-					</div>
-				</main>
+<body>
+	<div class="app-shell">
+		<header class="app-header">
+			<div>
+				<h1>짭스트맨</h1>
+				<p>API 요청을 생성하고 관리하세요.</p>
 			</div>
+		</header>
+
+		<div class="main-layout">
+			<aside class="sidebar">
+				<div class="sidebar-header">
+					<h2>요청 목록</h2>
+					<button id="newRequestBtn" type="button" class="new-request-btn" title="새 요청 추가">+</button>
+				</div>
+				<div id="requestList" class="request-list"></div>
+				<div id="emptyState" class="empty-state hidden">아직 저장된 항목이 없습니다.</div>
+				<div class="sidebar-footer">
+					<button id="clearButton" type="button" class="ghost-btn">전체 삭제</button>
+				</div>
+			</aside>
+
+			<main class="main-content">
+				<section class="entry-form hidden" id="entryFormSection">
+					<form id="entryForm">
+						<div class="field">
+							<label for="titleInput">Title</label>
+							<input id="titleInput" type="text" placeholder="예) 사용자 조회" required />
+						</div>
+						<div class="field">
+							<label for="methodSelect">Method</label>
+							<select id="methodSelect" required>
+								<option value="GET">GET</option>
+								<option value="POST">POST</option>
+								<option value="PUT">PUT</option>
+								<option value="PATCH">PATCH</option>
+								<option value="DELETE">DELETE</option>
+							</select>
+						</div>
+						<div class="field">
+							<label for="urlInput">URL</label>
+							<input id="urlInput" type="url" placeholder="https://api.example.com/users" required />
+						</div>
+						<div class="field">
+							<label>Headers</label>
+							<div id="headersList" class="headers-list"></div>
+							<button type="button" id="addHeaderBtn" class="ghost-btn slim-btn" aria-label="헤더 추가">
+								헤더 추가
+							</button>
+							<small class="help-text">Key/Value 쌍으로 입력하고 필요 없는 항목은 삭제하세요.</small>
+						</div>
+						<div class="field">
+							<div class="json-label-container">
+								<label for="jsonInput">Json-data</label>
+								<button type="button" id="formatJsonInputBtn" class="format-json-btn"
+									title="JSON 포맷팅 (Ctrl+Shift+F)">포맷</button>
+							</div>
+							<div id="jsonInput" class="monaco-editor-container"></div>
+						</div>
+						<div class="form-actions">
+							<button type="button" id="cancelFormBtn" class="ghost-btn secondary-btn">취소</button>
+							<button type="submit" class="primary-btn">추가</button>
+						</div>
+					</form>
+				</section>
+
+				<div id="tabDetails" class="tab-details hidden">
+					<!-- 동적으로 생성됨 -->
+				</div>
+			</main>
 		</div>
+	</div>
 
-		<script>
-			(() => {
-				// Monaco Editor 초기화
-				let monacoEditorInstances = {};
-				let monacoLoaded = false;
+	<script>
+		(() => {
+			// Monaco Editor 초기화
+			let monacoEditorInstances = {};
+			let monacoLoaded = false;
 
-				const initMonacoEditor = async (containerId, initialValue = '') => {
-					return new Promise((resolve) => {
-						// Monaco가 이미 로드되었는지 확인
-						if (typeof monaco !== 'undefined' && monaco.editor) {
-							createEditorInstance(containerId, initialValue, resolve);
-							return;
-						}
-
-						// Monaco 로드
-						if (!monacoLoaded) {
-							monacoLoaded = true;
-							// Electron 환경에서 require 충돌 방지
-							const loaderScript = document.createElement('script');
-							loaderScript.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js';
-							loaderScript.onload = () => {
-								// require를 별도 변수로 저장 (Electron의 require와 충돌 방지)
-								const requireMonaco = window.require || require;
-								requireMonaco.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
-								requireMonaco(['vs/editor/editor.main'], () => {
-									createEditorInstance(containerId, initialValue, resolve);
-								});
-							};
-							document.head.appendChild(loaderScript);
-						} else {
-							// 이미 로딩 중이면 대기
-							const checkMonaco = setInterval(() => {
-								if (typeof monaco !== 'undefined' && monaco.editor) {
-									clearInterval(checkMonaco);
-									createEditorInstance(containerId, initialValue, resolve);
-								}
-							}, 100);
-						}
-					});
-				};
-
-				const createEditorInstance = (containerId, initialValue, resolve) => {
-					const container = document.getElementById(containerId);
-					if (!container) {
-						resolve(null);
+			const initMonacoEditor = async (containerId, initialValue = '') => {
+				return new Promise((resolve) => {
+					// Monaco가 이미 로드되었는지 확인
+					if (typeof monaco !== 'undefined' && monaco.editor) {
+						createEditorInstance(containerId, initialValue, resolve);
 						return;
 					}
 
-					// 기존 인스턴스가 있으면 제거
-					if (monacoEditorInstances[containerId]) {
-						monacoEditorInstances[containerId].dispose();
-					}
-
-					const editor = monaco.editor.create(container, {
-						value: initialValue,
-						language: 'json',
-						theme: 'vs',
-						automaticLayout: true,
-						minimap: { enabled: false },
-						scrollBeyondLastLine: false,
-						fontSize: 13,
-						fontFamily: "'Courier New', monospace",
-						wordWrap: 'on',
-						formatOnPaste: true,
-						formatOnType: true,
-						tabSize: 4,
-						insertSpaces: true,
-					});
-
-					// 포맷 단축키
-					editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF, () => {
-						editor.getAction('editor.action.formatDocument').run();
-					});
-
-					monacoEditorInstances[containerId] = editor;
-					resolve(editor);
-				};
-
-				const getMonacoValue = (containerId) => {
-					const editor = monacoEditorInstances[containerId];
-					return editor ? editor.getValue() : '';
-				};
-
-				const setMonacoValue = (containerId, value) => {
-					const editor = monacoEditorInstances[containerId];
-					if (editor) {
-						editor.setValue(value || '');
-					}
-				};
-
-				const STORAGE_KEY = 'apiProgramEntries';
-
-				const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-
-				const form = document.getElementById('entryForm');
-				const requestList = document.getElementById('requestList');
-				const details = document.getElementById('tabDetails');
-				const emptyState = document.getElementById('emptyState');
-				const clearButton = document.getElementById('clearButton');
-				const newRequestBtn = document.getElementById('newRequestBtn');
-				const entryFormSection = document.getElementById('entryFormSection');
-				const titleInput = document.getElementById('titleInput');
-				const methodSelect = document.getElementById('methodSelect');
-				const urlInput = document.getElementById('urlInput');
-				const headersList = document.getElementById('headersList');
-				const addHeaderBtn = document.getElementById('addHeaderBtn');
-				const jsonInputContainer = document.getElementById('jsonInput');
-				const responseCache = {};
-				const requestHistory = {}; // 요청 ID별 히스토리 저장
-
-				const headersArrayToObject = (list = []) => {
-					return list.reduce((acc, { key, value }) => {
-						if (key) {
-							acc[key] = value ?? '';
-						}
-						return acc;
-					}, {});
-				};
-
-				const serializeHeaders = (list = []) => {
-					const obj = headersArrayToObject(list);
-					const keys = Object.keys(obj);
-					return keys.length ? JSON.stringify(obj) : '';
-				};
-
-				const parseHeadersText = (text = '') => {
-					if (!text || !text.trim()) return [];
-					try {
-						const parsed = JSON.parse(text);
-						if (Array.isArray(parsed)) {
-							return parsed
-								.map((item) => ({
-									key: item.key ?? '',
-									value: item.value ?? '',
-								}))
-								.filter(({ key, value }) => key || value);
-						}
-						if (typeof parsed === 'object' && parsed !== null) {
-							return Object.entries(parsed).map(([key, value]) => ({
-								key,
-								value: String(value ?? ''),
-							}));
-						}
-					} catch (_) {
-						console.warn('Headers 문자열 파싱 실패', text);
-					}
-					return [];
-				};
-
-				const createHeaderRowElement = ({ key = '', value = '' } = {}) => {
-					const row = document.createElement('div');
-					row.className = 'header-row';
-
-					const keyInput = document.createElement('input');
-					keyInput.type = 'text';
-					keyInput.placeholder = 'Key';
-					keyInput.value = key;
-					keyInput.className = 'header-key';
-
-					const valueInput = document.createElement('input');
-					valueInput.type = 'text';
-					valueInput.placeholder = 'Value';
-					valueInput.value = value;
-					valueInput.className = 'header-value';
-
-					const removeBtn = document.createElement('button');
-					removeBtn.type = 'button';
-					removeBtn.className = 'ghost-btn icon-btn';
-					removeBtn.textContent = '×';
-					removeBtn.setAttribute('aria-label', '헤더 삭제');
-					removeBtn.addEventListener('click', () => {
-						row.remove();
-						if (!row.parentElement?.querySelector('.header-row')) {
-							row.parentElement?.appendChild(createHeaderRowElement());
-						}
-					});
-
-					row.appendChild(keyInput);
-					row.appendChild(valueInput);
-					row.appendChild(removeBtn);
-					return row;
-				};
-
-				const initHeaderList = (container, rows = []) => {
-					container.innerHTML = '';
-					const safeRows = rows.length ? rows : [{}];
-					safeRows.forEach((row) => container.appendChild(createHeaderRowElement(row)));
-				};
-
-				const collectHeaderRows = (container) => {
-					return Array.from(container.querySelectorAll('.header-row'))
-						.map((row) => ({
-							key: row.querySelector('.header-key').value.trim(),
-							value: row.querySelector('.header-value').value.trim(),
-						}))
-						.filter(({ key, value }) => key || value);
-				};
-
-				const createParamRowElement = ({ key = '', value = '', type = 'text' } = {}) => {
-					const row = document.createElement('div');
-					row.className = 'param-row';
-
-					const keyInput = document.createElement('input');
-					keyInput.type = 'text';
-					keyInput.placeholder = 'Key';
-					keyInput.value = key;
-					keyInput.className = 'param-key';
-
-					// Value 입력 영역 (text 또는 file)
-					const valueWrapper = document.createElement('div');
-					valueWrapper.className = 'param-value-wrapper';
-
-					const valueTextInput = document.createElement('textarea');
-					valueTextInput.type = 'text';
-					valueTextInput.placeholder = 'Value';
-					valueTextInput.value = type === 'text' ? value : '';
-					valueTextInput.className = 'param-value';
-					valueTextInput.style.display = type === 'text' ? 'block' : 'none';
-
-					const valueFileInput = document.createElement('input');
-					valueFileInput.type = 'file';
-					valueFileInput.className = 'param-value-file';
-					valueFileInput.style.padding = '3px 3px';
-					valueFileInput.style.display = type === 'file' ? 'block' : 'none';
-					
-					// 파일 선택 시 파일명 표시
-					const fileDisplay = document.createElement('div');
-					fileDisplay.className = 'file-display';
-					fileDisplay.style.display = type === 'file' && value ? 'block' : 'none';
-					fileDisplay.textContent = value || '파일 선택';
-					fileDisplay.style.cursor = 'pointer';
-					fileDisplay.style.padding = '8px 10px';
-					fileDisplay.style.border = '1px solid #d0d5dd';
-					fileDisplay.style.borderRadius = '6px';
-					fileDisplay.style.fontSize = '13px';
-					fileDisplay.style.color = value ? '#344054' : '#94a3b8';
-					
-					valueFileInput.addEventListener('change', (event) => {
-						const file = event.target.files[0];
-						if (file) {
-							// 이미지 파일인지 확인
-							const isImage = file.type.startsWith('image/');
-							
-							if (isImage) {
-								// 이미지면 base64로 변환
-								const reader = new FileReader();
-								reader.onload = (e) => {
-									const dataURL = e.target.result;
-									// data:image/...;base64, 부분을 제거하고 순수 base64만 추출
-									const base64 = dataURL.includes(',') ? dataURL.split(',')[1] : dataURL;
-									valueFileInput.dataset.base64 = base64;
-									valueFileInput.dataset.fileName = file.name;
-									valueFileInput.dataset.fileType = file.type;
-									
-									// 파일명 표시 (이미지 변환 완료 표시)
-									if (fileDisplay) {
-										fileDisplay.textContent = `${file.name} (base64 변환됨)`;
-										fileDisplay.style.color = '#344054';
-									}
-								};
-								reader.onerror = () => {
-									alert('파일 읽기 중 오류가 발생했습니다.');
-									valueFileInput.value = '';
-								};
-								reader.readAsDataURL(file);
-							} else {
-								// 이미지가 아니면 파일명만 저장
-								valueFileInput.dataset.fileName = file.name;
-								valueFileInput.dataset.filePath = file.path || '';
-								valueFileInput.dataset.base64 = '';
-								
-								if (fileDisplay) {
-									fileDisplay.textContent = file.name;
-									fileDisplay.style.color = '#344054';
-								}
+					// Monaco 로드
+					if (!monacoLoaded) {
+						monacoLoaded = true;
+						// Electron 환경에서 require 충돌 방지
+						const loaderScript = document.createElement('script');
+						loaderScript.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js';
+						loaderScript.onload = () => {
+							// require를 별도 변수로 저장 (Electron의 require와 충돌 방지)
+							const requireMonaco = window.require || require;
+							requireMonaco.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+							requireMonaco(['vs/editor/editor.main'], () => {
+								createEditorInstance(containerId, initialValue, resolve);
+							});
+						};
+						document.head.appendChild(loaderScript);
+					} else {
+						// 이미 로딩 중이면 대기
+						const checkMonaco = setInterval(() => {
+							if (typeof monaco !== 'undefined' && monaco.editor) {
+								clearInterval(checkMonaco);
+								createEditorInstance(containerId, initialValue, resolve);
 							}
-						}
-					});
-
-					if (fileDisplay) {
-						fileDisplay.addEventListener('click', () => {
-							valueFileInput.click();
-						});
-
-						if (type === 'file' && value) {
-							fileDisplay.textContent = value;
-							fileDisplay.style.color = '#344054';
-						}
+						}, 100);
 					}
+				});
+			};
 
-					valueWrapper.appendChild(valueTextInput);
-					valueWrapper.appendChild(valueFileInput);
-					// valueWrapper.appendChild(fileDisplay);
+			const createEditorInstance = (containerId, initialValue, resolve) => {
+				const container = document.getElementById(containerId);
+				if (!container) {
+					resolve(null);
+					return;
+				}
 
-					const typeSelect = document.createElement('select');
-					typeSelect.className = 'param-type';
-					const textOption = document.createElement('option');
-					textOption.value = 'text';
-					textOption.textContent = 'text';
-					const intOption = document.createElement('option');
-					intOption.value = 'int';
-					intOption.textContent = 'int';
-					const fileOption = document.createElement('option');
-					fileOption.value = 'file';
-					fileOption.textContent = 'file';
-					typeSelect.appendChild(textOption);
-					typeSelect.appendChild(intOption);
-					typeSelect.appendChild(fileOption);
-					typeSelect.value = type;
+				// 기존 인스턴스가 있으면 제거
+				if (monacoEditorInstances[containerId]) {
+					monacoEditorInstances[containerId].dispose();
+				}
 
-					// Type 변경 시 입력 필드 전환
-					typeSelect.addEventListener('change', (event) => {
-						const selectedType = event.target.value;
-						if (selectedType === 'file') {
-							valueTextInput.style.display = 'none';
-							valueFileInput.style.display = 'block';
-							if (fileDisplay) {
-								fileDisplay.style.display = 'block';
-							}
-							valueTextInput.value = '';
-							// base64 데이터 초기화
-							valueFileInput.dataset.base64 = '';
-							valueFileInput.dataset.fileName = '';
-						} else {
-							valueTextInput.style.display = 'block';
-							valueFileInput.style.display = 'none';
-							if (fileDisplay) {
-								fileDisplay.style.display = 'none';
-								fileDisplay.textContent = '파일 선택';
-								fileDisplay.style.color = '#94a3b8';
-							}
-							valueFileInput.value = '';
-							// base64 데이터 초기화
-							valueFileInput.dataset.base64 = '';
-							valueFileInput.dataset.fileName = '';
-							
-							// int 타입일 때 숫자 입력만 허용
-							if (selectedType === 'int') {
-								valueTextInput.type = 'number';
-								valueTextInput.step = '1';
-								valueTextInput.placeholder = '정수 입력';
-							} else {
-								valueTextInput.type = 'text';
-								valueTextInput.placeholder = 'Value';
-							}
-						}
-					});
-					
-					// 초기 타입에 따라 input 타입 설정
-					if (type === 'int') {
-						valueTextInput.type = 'number';
-						valueTextInput.step = '1';
-						valueTextInput.placeholder = '정수 입력';
-					}
-
-					const removeBtn = document.createElement('button');
-					removeBtn.type = 'button';
-					removeBtn.className = 'ghost-btn icon-btn';
-					removeBtn.textContent = '×';
-					removeBtn.setAttribute('aria-label', '파라미터 삭제');
-					removeBtn.addEventListener('click', () => {
-						row.remove();
-						if (!row.parentElement?.querySelector('.param-row')) {
-							row.parentElement?.appendChild(createParamRowElement());
-						}
-					});
-
-					row.appendChild(typeSelect);
-					row.appendChild(keyInput);
-					row.appendChild(valueWrapper);
-					row.appendChild(removeBtn);
-					return row;
-				};
-
-				const initParamList = (container, rows = []) => {
-					container.innerHTML = '';
-					const safeRows = rows.length ? rows : [{}];
-					safeRows.forEach((row) => container.appendChild(createParamRowElement(row)));
-				};
-
-				const collectParamRows = (container) => {
-					return Array.from(container.querySelectorAll('.param-row'))
-						.map((row) => {
-							const key = row.querySelector('.param-key').value.trim();
-							const type = row.querySelector('.param-type').value;
-							let value = '';
-							
-							if (type === 'file') {
-								const fileInput = row.querySelector('.param-value-file');
-								if (fileInput) {
-									// base64가 있으면 base64 사용 (이미지)
-									if (fileInput.dataset.base64) {
-										value = fileInput.dataset.base64;
-									} else if (fileInput.files && fileInput.files.length > 0) {
-										// base64가 없으면 파일명 사용
-										value = fileInput.files[0].name;
-									} else if (fileInput.dataset.fileName) {
-										value = fileInput.dataset.fileName;
-									}
-								}
-							} else {
-								const textInput = row.querySelector('.param-value');
-								if (textInput) {
-									// 줄바꿈은 그대로 유지 (플레이스홀더 치환 시에만 변환)
-									value = textInput.value;
-									// 앞뒤 공백만 제거
-									value = value.trim();
-								}
-							}
-							
-							return { key, value, type };
-						})
-						.filter(({ key, value }) => key || value);
-				};
-
-				initHeaderList(headersList);
-				addHeaderBtn.addEventListener('click', () => {
-					headersList.appendChild(createHeaderRowElement());
+				const editor = monaco.editor.create(container, {
+					value: initialValue,
+					language: 'json',
+					theme: 'vs',
+					automaticLayout: true,
+					minimap: { enabled: false },
+					scrollBeyondLastLine: false,
+					fontSize: 13,
+					fontFamily: "'Courier New', monospace",
+					wordWrap: 'on',
+					formatOnPaste: true,
+					formatOnType: true,
+					tabSize: 4,
+					insertSpaces: true,
 				});
 
-				let entries = [];
-				let activeId = '';
-				let activeTab = 'headers'; // 기본값은 headers
+				// 포맷 단축키
+				editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF, () => {
+					editor.getAction('editor.action.formatDocument').run();
+				});
 
-				const generateId = () => {
-					return typeof crypto !== 'undefined' && crypto.randomUUID
-						? crypto.randomUUID()
-						: `entry-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-				};
+				monacoEditorInstances[containerId] = editor;
+				resolve(editor);
+			};
 
-				const parseEntries = () => {
-					try {
-						const raw = localStorage.getItem(STORAGE_KEY);
-						return raw ? JSON.parse(raw) : [];
-					} catch (err) {
-						console.error('localStorage 파싱 오류', err);
-						return [];
+			const getMonacoValue = (containerId) => {
+				const editor = monacoEditorInstances[containerId];
+				return editor ? editor.getValue() : '';
+			};
+
+			const setMonacoValue = (containerId, value) => {
+				const editor = monacoEditorInstances[containerId];
+				if (editor) {
+					editor.setValue(value || '');
+				}
+			};
+
+			const STORAGE_KEY = 'apiProgramEntries';
+
+			const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+
+			const form = document.getElementById('entryForm');
+			const requestList = document.getElementById('requestList');
+			const details = document.getElementById('tabDetails');
+			const emptyState = document.getElementById('emptyState');
+			const clearButton = document.getElementById('clearButton');
+			const newRequestBtn = document.getElementById('newRequestBtn');
+			const entryFormSection = document.getElementById('entryFormSection');
+			const titleInput = document.getElementById('titleInput');
+			const methodSelect = document.getElementById('methodSelect');
+			const urlInput = document.getElementById('urlInput');
+			const headersList = document.getElementById('headersList');
+			const addHeaderBtn = document.getElementById('addHeaderBtn');
+			const jsonInputContainer = document.getElementById('jsonInput');
+			const responseCache = {};
+			const requestHistory = {}; // 요청 ID별 히스토리 저장
+
+			const headersArrayToObject = (list = []) => {
+				return list.reduce((acc, { key, value }) => {
+					if (key) {
+						acc[key] = value ?? '';
 					}
-				};
+					return acc;
+				}, {});
+			};
 
-				const persistEntries = () => {
-					localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-				};
+			const serializeHeaders = (list = []) => {
+				const obj = headersArrayToObject(list);
+				const keys = Object.keys(obj);
+				return keys.length ? JSON.stringify(obj) : '';
+			};
 
-				const setActive = (id) => {
-					activeId = id;
-					renderTabs();
-					renderDetails();
-				};
-
-				const deleteEntry = (id) => {
-					entries = entries.filter((entry) => entry.id !== id);
-					activeId = activeId === id ? entries[0]?.id ?? '' : activeId;
-					persistEntries();
-					renderTabs();
-					renderDetails();
-					if (!entries.length) {
-						resetForm();
+			const parseHeadersText = (text = '') => {
+				if (!text || !text.trim()) return [];
+				try {
+					const parsed = JSON.parse(text);
+					if (Array.isArray(parsed)) {
+						return parsed
+							.map((item) => ({
+								key: item.key ?? '',
+								value: item.value ?? '',
+							}))
+							.filter(({ key, value }) => key || value);
 					}
-				};
-
-				const renderTabs = () => {
-					requestList.innerHTML = '';
-
-					if (!entries.length) {
-						requestList.classList.add('hidden');
-						emptyState.classList.remove('hidden');
-						details.classList.add('hidden');
-						entryFormSection.classList.add('hidden');
-						return;
+					if (typeof parsed === 'object' && parsed !== null) {
+						return Object.entries(parsed).map(([key, value]) => ({
+							key,
+							value: String(value ?? ''),
+						}));
 					}
+				} catch (_) {
+					console.warn('Headers 문자열 파싱 실패', text);
+				}
+				return [];
+			};
 
-					requestList.classList.remove('hidden');
-					emptyState.classList.add('hidden');
+			const createHeaderRowElement = ({ key = '', value = '' } = {}) => {
+				const row = document.createElement('div');
+				row.className = 'header-row';
+
+				const keyInput = document.createElement('input');
+				keyInput.type = 'text';
+				keyInput.placeholder = 'Key';
+				keyInput.value = key;
+				keyInput.className = 'header-key';
+
+				const valueInput = document.createElement('input');
+				valueInput.type = 'text';
+				valueInput.placeholder = 'Value';
+				valueInput.value = value;
+				valueInput.className = 'header-value';
+
+				const removeBtn = document.createElement('button');
+				removeBtn.type = 'button';
+				removeBtn.className = 'ghost-btn icon-btn';
+				removeBtn.textContent = '×';
+				removeBtn.setAttribute('aria-label', '헤더 삭제');
+				removeBtn.addEventListener('click', () => {
+					row.remove();
+					if (!row.parentElement?.querySelector('.header-row')) {
+						row.parentElement?.appendChild(createHeaderRowElement());
+					}
+				});
+
+				row.appendChild(keyInput);
+				row.appendChild(valueInput);
+				row.appendChild(removeBtn);
+				return row;
+			};
+
+			const initHeaderList = (container, rows = []) => {
+				container.innerHTML = '';
+				const safeRows = rows.length ? rows : [{}];
+				safeRows.forEach((row) => container.appendChild(createHeaderRowElement(row)));
+			};
+
+			const collectHeaderRows = (container) => {
+				return Array.from(container.querySelectorAll('.header-row'))
+					.map((row) => ({
+						key: row.querySelector('.header-key').value.trim(),
+						value: row.querySelector('.header-value').value.trim(),
+					}))
+					.filter(({ key, value }) => key || value);
+			};
+
+			const createParamRowElement = ({ key = '', value = '', type = 'text' } = {}) => {
+				const row = document.createElement('div');
+				row.className = 'param-row';
+
+				const keyInput = document.createElement('input');
+				keyInput.type = 'text';
+				keyInput.placeholder = 'Key';
+				keyInput.value = key;
+				keyInput.className = 'param-key';
+
+				// Value 입력 영역 (text 또는 file)
+				const valueWrapper = document.createElement('div');
+				valueWrapper.className = 'param-value-wrapper';
+
+				const valueTextInput = document.createElement('textarea');
+				valueTextInput.type = 'text';
+				valueTextInput.placeholder = 'Value';
+				valueTextInput.value = type === 'text' ? value : '';
+				valueTextInput.className = 'param-value';
+				valueTextInput.style.display = type === 'text' ? 'block' : 'none';
+
+				const valueFileInput = document.createElement('input');
+				valueFileInput.type = 'file';
+				valueFileInput.className = 'param-value-file';
+				valueFileInput.style.padding = '3px 3px';
+				valueFileInput.style.display = type === 'file' ? 'block' : 'none';
+
+				// 파일 선택 시 파일명 표시
+				const fileDisplay = document.createElement('div');
+				fileDisplay.className = 'file-display';
+				fileDisplay.style.display = type === 'file' && value ? 'block' : 'none';
+				fileDisplay.textContent = value || '파일 선택';
+				fileDisplay.style.cursor = 'pointer';
+				fileDisplay.style.padding = '8px 10px';
+				fileDisplay.style.border = '1px solid #d0d5dd';
+				fileDisplay.style.borderRadius = '6px';
+				fileDisplay.style.fontSize = '13px';
+				fileDisplay.style.color = value ? '#344054' : '#94a3b8';
+
+				valueFileInput.addEventListener('change', (event) => {
+					const file = event.target.files[0];
+					if (file) {
+						// 이미지 파일인지 확인
+						const isImage = file.type.startsWith('image/');
+
+						if (isImage) {
+							// 이미지면 base64로 변환
+							const reader = new FileReader();
+							reader.onload = (e) => {
+								const dataURL = e.target.result;
+								// data:image/...;base64, 부분을 제거하고 순수 base64만 추출
+								const base64 = dataURL.includes(',') ? dataURL.split(',')[1] : dataURL;
+								valueFileInput.dataset.base64 = base64;
+								valueFileInput.dataset.fileName = file.name;
+								valueFileInput.dataset.fileType = file.type;
+
+								// 파일명 표시 (이미지 변환 완료 표시)
+								if (fileDisplay) {
+									fileDisplay.textContent = `${file.name} (base64 변환됨)`;
+									fileDisplay.style.color = '#344054';
+								}
+							};
+							reader.onerror = () => {
+								alert('파일 읽기 중 오류가 발생했습니다.');
+								valueFileInput.value = '';
+							};
+							reader.readAsDataURL(file);
+						} else {
+							// 이미지가 아니면 파일명만 저장
+							valueFileInput.dataset.fileName = file.name;
+							valueFileInput.dataset.filePath = file.path || '';
+							valueFileInput.dataset.base64 = '';
+
+							if (fileDisplay) {
+								fileDisplay.textContent = file.name;
+								fileDisplay.style.color = '#344054';
+							}
+						}
+					}
+				});
+
+				if (fileDisplay) {
+					fileDisplay.addEventListener('click', () => {
+						valueFileInput.click();
+					});
+
+					if (type === 'file' && value) {
+						fileDisplay.textContent = value;
+						fileDisplay.style.color = '#344054';
+					}
+				}
+
+				valueWrapper.appendChild(valueTextInput);
+				valueWrapper.appendChild(valueFileInput);
+				// valueWrapper.appendChild(fileDisplay);
+
+				const typeSelect = document.createElement('select');
+				typeSelect.className = 'param-type';
+				const textOption = document.createElement('option');
+				textOption.value = 'text';
+				textOption.textContent = 'text';
+				const intOption = document.createElement('option');
+				intOption.value = 'int';
+				intOption.textContent = 'int';
+				const fileOption = document.createElement('option');
+				fileOption.value = 'file';
+				fileOption.textContent = 'file';
+				typeSelect.appendChild(textOption);
+				typeSelect.appendChild(intOption);
+				typeSelect.appendChild(fileOption);
+				typeSelect.value = type;
+
+				// Type 변경 시 입력 필드 전환
+				typeSelect.addEventListener('change', (event) => {
+					const selectedType = event.target.value;
+					if (selectedType === 'file') {
+						valueTextInput.style.display = 'none';
+						valueFileInput.style.display = 'block';
+						if (fileDisplay) {
+							fileDisplay.style.display = 'block';
+						}
+						valueTextInput.value = '';
+						// base64 데이터 초기화
+						valueFileInput.dataset.base64 = '';
+						valueFileInput.dataset.fileName = '';
+					} else {
+						valueTextInput.style.display = 'block';
+						valueFileInput.style.display = 'none';
+						if (fileDisplay) {
+							fileDisplay.style.display = 'none';
+							fileDisplay.textContent = '파일 선택';
+							fileDisplay.style.color = '#94a3b8';
+						}
+						valueFileInput.value = '';
+						// base64 데이터 초기화
+						valueFileInput.dataset.base64 = '';
+						valueFileInput.dataset.fileName = '';
+
+						// int 타입일 때 숫자 입력만 허용
+						if (selectedType === 'int') {
+							valueTextInput.type = 'number';
+							valueTextInput.step = '1';
+							valueTextInput.placeholder = '정수 입력';
+						} else {
+							valueTextInput.type = 'text';
+							valueTextInput.placeholder = 'Value';
+						}
+					}
+				});
+
+				// 초기 타입에 따라 input 타입 설정
+				if (type === 'int') {
+					valueTextInput.type = 'number';
+					valueTextInput.step = '1';
+					valueTextInput.placeholder = '정수 입력';
+				}
+
+				const removeBtn = document.createElement('button');
+				removeBtn.type = 'button';
+				removeBtn.className = 'ghost-btn icon-btn';
+				removeBtn.textContent = '×';
+				removeBtn.setAttribute('aria-label', '파라미터 삭제');
+				removeBtn.addEventListener('click', () => {
+					row.remove();
+					if (!row.parentElement?.querySelector('.param-row')) {
+						row.parentElement?.appendChild(createParamRowElement());
+					}
+				});
+
+				row.appendChild(typeSelect);
+				row.appendChild(keyInput);
+				row.appendChild(valueWrapper);
+				row.appendChild(removeBtn);
+				return row;
+			};
+
+			const initParamList = (container, rows = []) => {
+				container.innerHTML = '';
+				const safeRows = rows.length ? rows : [{}];
+				safeRows.forEach((row) => container.appendChild(createParamRowElement(row)));
+			};
+
+			const collectParamRows = (container) => {
+				return Array.from(container.querySelectorAll('.param-row'))
+					.map((row) => {
+						const key = row.querySelector('.param-key').value.trim();
+						const type = row.querySelector('.param-type').value;
+						let value = '';
+
+						if (type === 'file') {
+							const fileInput = row.querySelector('.param-value-file');
+							if (fileInput) {
+								// base64가 있으면 base64 사용 (이미지)
+								if (fileInput.dataset.base64) {
+									value = fileInput.dataset.base64;
+								} else if (fileInput.files && fileInput.files.length > 0) {
+									// base64가 없으면 파일명 사용
+									value = fileInput.files[0].name;
+								} else if (fileInput.dataset.fileName) {
+									value = fileInput.dataset.fileName;
+								}
+							}
+						} else {
+							const textInput = row.querySelector('.param-value');
+							if (textInput) {
+								// 줄바꿈은 그대로 유지 (플레이스홀더 치환 시에만 변환)
+								value = textInput.value;
+								// 앞뒤 공백만 제거
+								value = value.trim();
+							}
+						}
+
+						return { key, value, type };
+					})
+					.filter(({ key, value }) => key || value);
+			};
+
+			initHeaderList(headersList);
+			addHeaderBtn.addEventListener('click', () => {
+				headersList.appendChild(createHeaderRowElement());
+			});
+
+			let entries = [];
+			let activeId = '';
+			let activeTab = 'headers'; // 기본값은 headers
+
+			const generateId = () => {
+				return typeof crypto !== 'undefined' && crypto.randomUUID
+					? crypto.randomUUID()
+					: `entry-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+			};
+
+			const parseEntries = () => {
+				try {
+					const raw = localStorage.getItem(STORAGE_KEY);
+					return raw ? JSON.parse(raw) : [];
+				} catch (err) {
+					console.error('localStorage 파싱 오류', err);
+					return [];
+				}
+			};
+
+			const persistEntries = () => {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+			};
+
+			const setActive = (id) => {
+				activeId = id;
+				renderTabs();
+				renderDetails();
+			};
+
+			const deleteEntry = (id) => {
+				entries = entries.filter((entry) => entry.id !== id);
+				activeId = activeId === id ? entries[0]?.id ?? '' : activeId;
+				persistEntries();
+				renderTabs();
+				renderDetails();
+				if (!entries.length) {
+					resetForm();
+				}
+			};
+
+			const renderTabs = () => {
+				requestList.innerHTML = '';
+
+				if (!entries.length) {
+					requestList.classList.add('hidden');
+					emptyState.classList.remove('hidden');
+					details.classList.add('hidden');
 					entryFormSection.classList.add('hidden');
+					return;
+				}
 
-					entries.forEach((entry) => {
-						const requestItem = document.createElement('div');
-						requestItem.className = `request-item ${entry.id === activeId ? 'active' : ''}`;
+				requestList.classList.remove('hidden');
+				emptyState.classList.add('hidden');
+				entryFormSection.classList.add('hidden');
 
-						const button = document.createElement('button');
-						button.type = 'button';
-						button.className = 'request-button';
-						button.innerHTML = `
+				entries.forEach((entry) => {
+					const requestItem = document.createElement('div');
+					requestItem.className = `request-item ${entry.id === activeId ? 'active' : ''}`;
+
+					const button = document.createElement('button');
+					button.type = 'button';
+					button.className = 'request-button';
+					button.innerHTML = `
 							<span class="request-method">${entry.method || 'GET'}</span>
 							<span class="request-title">${entry.title}</span>
 						`;
-						button.addEventListener('click', () => setActive(entry.id));
+					button.addEventListener('click', () => setActive(entry.id));
 
-						const deleteBtn = document.createElement('button');
-						deleteBtn.type = 'button';
-						deleteBtn.className = 'request-close';
-						deleteBtn.setAttribute('aria-label', `${entry.title} 삭제`);
-						deleteBtn.textContent = '×';
-						deleteBtn.addEventListener('click', (event) => {
-							event.stopPropagation();
-							deleteEntry(entry.id);
-						});
-
-						requestItem.appendChild(button);
-						requestItem.appendChild(deleteBtn);
-						requestList.appendChild(requestItem);
+					const deleteBtn = document.createElement('button');
+					deleteBtn.type = 'button';
+					deleteBtn.className = 'request-close';
+					deleteBtn.setAttribute('aria-label', `${entry.title} 삭제`);
+					deleteBtn.textContent = '×';
+					deleteBtn.addEventListener('click', (event) => {
+						event.stopPropagation();
+						deleteEntry(entry.id);
 					});
-				};
 
-				const buildEditableRow = (labelText, inputEl) => {
-					const wrapper = document.createElement('div');
-					wrapper.className = 'detail-row column editable';
+					requestItem.appendChild(button);
+					requestItem.appendChild(deleteBtn);
+					requestList.appendChild(requestItem);
+				});
+			};
 
-					const label = document.createElement('label');
-					label.textContent = labelText;
-					label.setAttribute('for', inputEl.id);
+			const buildEditableRow = (labelText, inputEl) => {
+				const wrapper = document.createElement('div');
+				wrapper.className = 'detail-row column editable';
 
-					wrapper.appendChild(label);
-					wrapper.appendChild(inputEl);
-					return wrapper;
-				};
+				const label = document.createElement('label');
+				label.textContent = labelText;
+				label.setAttribute('for', inputEl.id);
 
-				const detectImageTypeFromBase64 = (base64String) => {
-					try {
-						// base64 디코딩
-						const binaryString = atob(base64String);
-						const bytes = new Uint8Array(binaryString.length);
-						for (let i = 0; i < binaryString.length; i++) {
-							bytes[i] = binaryString.charCodeAt(i);
-						}
-						
-						// 매직 넘버로 이미지 타입 확인
-						if (bytes.length >= 4) {
-							// PNG: 89 50 4E 47
-							if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
-								return 'png';
-							}
-							// JPEG: FF D8 FF
-							if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
-								return 'jpeg';
-							}
-							// GIF: 47 49 46 38
-							if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) {
-								return 'gif';
-							}
-							// WebP: RIFF...WEBP
-							if (bytes.length >= 12 && 
-								bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-								bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) {
-								return 'webp';
-							}
-						}
-					} catch (e) {
-						// 디코딩 실패
+				wrapper.appendChild(label);
+				wrapper.appendChild(inputEl);
+				return wrapper;
+			};
+
+			const detectImageTypeFromBase64 = (base64String) => {
+				try {
+					// base64 디코딩
+					const binaryString = atob(base64String);
+					const bytes = new Uint8Array(binaryString.length);
+					for (let i = 0; i < binaryString.length; i++) {
+						bytes[i] = binaryString.charCodeAt(i);
 					}
-					return null;
-				};
 
-				const findBase64Images = (text) => {
-					const images = [];
-					
-					// data:image/... 형태의 base64 이미지 찾기
-					const base64ImageRegex = /data:image\/([^;]+);base64,([A-Za-z0-9+/=]+)/g;
-					let match;
-					while ((match = base64ImageRegex.exec(text)) !== null) {
-						images.push({
-							type: match[1],
-							data: match[0],
-							index: match.index
-						});
+					// 매직 넘버로 이미지 타입 확인
+					if (bytes.length >= 4) {
+						// PNG: 89 50 4E 47
+						if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
+							return 'png';
+						}
+						// JPEG: FF D8 FF
+						if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+							return 'jpeg';
+						}
+						// GIF: 47 49 46 38
+						if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) {
+							return 'gif';
+						}
+						// WebP: RIFF...WEBP
+						if (bytes.length >= 12 &&
+							bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+							bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) {
+							return 'webp';
+						}
 					}
-					
-					// JSON 내부의 base64 이미지 필드 찾기
-					try {
-						const jsonData = JSON.parse(text);
-						const findImagesInObject = (obj, path = '') => {
-							if (typeof obj === 'string') {
-								// data:image/ 형태인 경우
-								if (obj.startsWith('data:image/')) {
-									images.push({
-										type: obj.match(/data:image\/([^;]+)/)?.[1] || 'unknown',
-										data: obj,
-										path: path
-									});
-								} 
-								// 순수 base64 문자열인 경우 (최소 100자 이상, base64 문자만 포함)
-								else if (obj.length >= 100 && /^[A-Za-z0-9+/=]+$/.test(obj)) {
-									const imageType = detectImageTypeFromBase64(obj);
-									if (imageType) {
-										images.push({
-											type: imageType,
-											data: `data:image/${imageType};base64,${obj}`,
-											path: path
-										});
-									}
-								}
-							} else if (Array.isArray(obj)) {
-								obj.forEach((item, index) => {
-									findImagesInObject(item, path ? `${path}[${index}]` : `[${index}]`);
-								});
-							} else if (typeof obj === 'object' && obj !== null) {
-								Object.keys(obj).forEach((key) => {
-									findImagesInObject(obj[key], path ? `${path}.${key}` : key);
+				} catch (e) {
+					// 디코딩 실패
+				}
+				return null;
+			};
+
+			const findBase64Images = (text) => {
+				const images = [];
+
+				// data:image/... 형태의 base64 이미지 찾기
+				const base64ImageRegex = /data:image\/([^;]+);base64,([A-Za-z0-9+/=]+)/g;
+				let match;
+				while ((match = base64ImageRegex.exec(text)) !== null) {
+					images.push({
+						type: match[1],
+						data: match[0],
+						index: match.index
+					});
+				}
+
+				// JSON 내부의 base64 이미지 필드 찾기
+				try {
+					const jsonData = JSON.parse(text);
+					const findImagesInObject = (obj, path = '') => {
+						if (typeof obj === 'string') {
+							// data:image/ 형태인 경우
+							if (obj.startsWith('data:image/')) {
+								images.push({
+									type: obj.match(/data:image\/([^;]+)/)?.[1] || 'unknown',
+									data: obj,
+									path: path
 								});
 							}
-						};
-						findImagesInObject(jsonData);
-					} catch (e) {
-						// JSON 파싱 실패 시 텍스트에서 직접 찾기
-						// 순수 base64 문자열 패턴 찾기 (긴 base64 문자열)
-						const pureBase64Regex = /([A-Za-z0-9+/]{100,}={0,2})/g;
-						let base64Match;
-						while ((base64Match = pureBase64Regex.exec(text)) !== null) {
-							const base64Str = base64Match[1];
-							const imageType = detectImageTypeFromBase64(base64Str);
-							if (imageType) {
-								// 이미 추가되지 않은 경우만 추가
-								const alreadyAdded = images.some(img => img.data.includes(base64Str));
-								if (!alreadyAdded) {
+							// 순수 base64 문자열인 경우 (최소 100자 이상, base64 문자만 포함)
+							else if (obj.length >= 100 && /^[A-Za-z0-9+/=]+$/.test(obj)) {
+								const imageType = detectImageTypeFromBase64(obj);
+								if (imageType) {
 									images.push({
 										type: imageType,
-										data: `data:image/${imageType};base64,${base64Str}`,
-										index: base64Match.index
+										data: `data:image/${imageType};base64,${obj}`,
+										path: path
 									});
 								}
 							}
+						} else if (Array.isArray(obj)) {
+							obj.forEach((item, index) => {
+								findImagesInObject(item, path ? `${path}[${index}]` : `[${index}]`);
+							});
+						} else if (typeof obj === 'object' && obj !== null) {
+							Object.keys(obj).forEach((key) => {
+								findImagesInObject(obj[key], path ? `${path}.${key}` : key);
+							});
+						}
+					};
+					findImagesInObject(jsonData);
+				} catch (e) {
+					// JSON 파싱 실패 시 텍스트에서 직접 찾기
+					// 순수 base64 문자열 패턴 찾기 (긴 base64 문자열)
+					const pureBase64Regex = /([A-Za-z0-9+/]{100,}={0,2})/g;
+					let base64Match;
+					while ((base64Match = pureBase64Regex.exec(text)) !== null) {
+						const base64Str = base64Match[1];
+						const imageType = detectImageTypeFromBase64(base64Str);
+						if (imageType) {
+							// 이미 추가되지 않은 경우만 추가
+							const alreadyAdded = images.some(img => img.data.includes(base64Str));
+							if (!alreadyAdded) {
+								images.push({
+									type: imageType,
+									data: `data:image/${imageType};base64,${base64Str}`,
+									index: base64Match.index
+								});
+							}
 						}
 					}
-					
-					return images;
-				};
+				}
 
-				const downloadImage = (dataUrl, imageType, index) => {
-					try {
-						// data URL에서 base64 부분 추출
-						const base64Data = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
-						
-						// base64를 바이너리로 변환
-						const binaryString = atob(base64Data);
-						const bytes = new Uint8Array(binaryString.length);
-						for (let i = 0; i < binaryString.length; i++) {
-							bytes[i] = binaryString.charCodeAt(i);
-						}
-						
-						// Blob 생성
-						const mimeType = imageType === 'jpeg' ? 'image/jpeg' : 
-										imageType === 'png' ? 'image/png' :
-										imageType === 'gif' ? 'image/gif' :
-										imageType === 'webp' ? 'image/webp' : 'image/png';
-						const blob = new Blob([bytes], { type: mimeType });
-						
-						// 다운로드 링크 생성
-						const url = URL.createObjectURL(blob);
-						const link = document.createElement('a');
-						link.href = url;
-						link.download = `image-${index + 1}.${imageType}`;
-						document.body.appendChild(link);
-						link.click();
-						document.body.removeChild(link);
-						URL.revokeObjectURL(url);
-					} catch (error) {
-						console.error('이미지 다운로드 중 오류:', error);
-						alert('이미지 다운로드 중 오류가 발생했습니다.');
+				return images;
+			};
+
+			const downloadImage = (dataUrl, imageType, index) => {
+				try {
+					// data URL에서 base64 부분 추출
+					const base64Data = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+
+					// base64를 바이너리로 변환
+					const binaryString = atob(base64Data);
+					const bytes = new Uint8Array(binaryString.length);
+					for (let i = 0; i < binaryString.length; i++) {
+						bytes[i] = binaryString.charCodeAt(i);
 					}
-				};
 
-				const setupHistoryClickEvents = (container, history, requestId, historyHtml) => {
-					if (!requestId || !history || history.length === 0) return;
+					// Blob 생성
+					const mimeType = imageType === 'jpeg' ? 'image/jpeg' :
+						imageType === 'png' ? 'image/png' :
+							imageType === 'gif' ? 'image/gif' :
+								imageType === 'webp' ? 'image/webp' : 'image/png';
+					const blob = new Blob([bytes], { type: mimeType });
 
-					container.querySelectorAll('.history-item').forEach((item) => {
-						item.addEventListener('click', () => {
-							const historyIndex = parseInt(item.dataset.historyIndex);
-							const historyItem = history[historyIndex];
-							if (historyItem) {
-								// 요청 데이터 표시
-								const requestHtml = `
+					// 다운로드 링크 생성
+					const url = URL.createObjectURL(blob);
+					const link = document.createElement('a');
+					link.href = url;
+					link.download = `image-${index + 1}.${imageType}`;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+					URL.revokeObjectURL(url);
+				} catch (error) {
+					console.error('이미지 다운로드 중 오류:', error);
+					alert('이미지 다운로드 중 오류가 발생했습니다.');
+				}
+			};
+
+			const setupHistoryClickEvents = (container, history, requestId, historyHtml) => {
+				if (!requestId || !history || history.length === 0) return;
+
+				container.querySelectorAll('.history-item').forEach((item) => {
+					item.addEventListener('click', () => {
+						const historyIndex = parseInt(item.dataset.historyIndex);
+						const historyItem = history[historyIndex];
+						if (historyItem) {
+							// 요청 데이터 표시
+							const requestHtml = `
 									<div class="request-data">
 										<h4>요청 데이터</h4>
 										<div class="request-meta">
@@ -773,26 +776,26 @@
 									</div>
 								`;
 
-								// 응답 데이터 표시
-								const responseStatusClass = historyItem.response.ok ? 'status-badge success' : 'status-badge error';
-								const responseHeaderEntries = Object.entries(historyItem.response.headers || {});
-								const responseHeaderHtml = responseHeaderEntries.length
-									? `<div class="response-headers"><h4>Headers</h4><pre>${responseHeaderEntries
-											.map(([key, value]) => `${key}: ${value}`)
-											.join('\n')}</pre></div>`
-									: '';
+							// 응답 데이터 표시
+							const responseStatusClass = historyItem.response.ok ? 'status-badge success' : 'status-badge error';
+							const responseHeaderEntries = Object.entries(historyItem.response.headers || {});
+							const responseHeaderHtml = responseHeaderEntries.length
+								? `<div class="response-headers"><h4>Headers</h4><pre>${responseHeaderEntries
+									.map(([key, value]) => `${key}: ${value}`)
+									.join('\n')}</pre></div>`
+								: '';
 
-								let responseBodyHtml = '';
-								let responseImageHtml = '';
-								let responseImages = [];
-								
-								if (historyItem.response.body) {
-									responseImages = findBase64Images(historyItem.response.body);
-									
-									if (responseImages.length > 0) {
-										responseImageHtml = '<div class="response-images"><h4>이미지</h4><div class="image-gallery">';
-										responseImages.forEach((img, idx) => {
-											responseImageHtml += `
+							let responseBodyHtml = '';
+							let responseImageHtml = '';
+							let responseImages = [];
+
+							if (historyItem.response.body) {
+								responseImages = findBase64Images(historyItem.response.body);
+
+								if (responseImages.length > 0) {
+									responseImageHtml = '<div class="response-images"><h4>이미지</h4><div class="image-gallery">';
+									responseImages.forEach((img, idx) => {
+										responseImageHtml += `
 												<div class="image-item">
 													<img src="${img.data}" alt="Image ${idx + 1}" class="response-image" />
 													${img.path ? `<small class="image-path">${img.path}</small>` : ''}
@@ -801,16 +804,16 @@
 													</button>
 												</div>
 											`;
-										});
-										responseImageHtml += '</div></div>';
-									}
-									
-									responseBodyHtml = `<div class="response-body"><h4>Body</h4><pre>${historyItem.response.body}</pre></div>`;
+									});
+									responseImageHtml += '</div></div>';
 								}
 
-								const responseErrorHtml = historyItem.response.error ? `<p class="response-error">${historyItem.response.error}</p>` : '';
+								responseBodyHtml = `<div class="response-body"><h4>Body</h4><pre>${historyItem.response.body}</pre></div>`;
+							}
 
-								container.innerHTML = `
+							const responseErrorHtml = historyItem.response.error ? `<p class="response-error">${historyItem.response.error}</p>` : '';
+
+							container.innerHTML = `
 									${historyHtml}
 									<div class="response-left">
 										${requestHtml}
@@ -825,112 +828,112 @@
 									${responseImageHtml}
 								`;
 
-								// 이미지 다운로드 버튼 이벤트 리스너 추가
-								if (responseImages.length > 0) {
-									container.querySelectorAll('.download-image-btn').forEach((btn, idx) => {
-										btn.addEventListener('click', () => {
-											const img = responseImages[idx];
-											downloadImage(img.data, img.type, idx);
-										});
+							// 이미지 다운로드 버튼 이벤트 리스너 추가
+							if (responseImages.length > 0) {
+								container.querySelectorAll('.download-image-btn').forEach((btn, idx) => {
+									btn.addEventListener('click', () => {
+										const img = responseImages[idx];
+										downloadImage(img.data, img.type, idx);
 									});
-								}
-
-								// 선택된 히스토리 항목 하이라이트
-								container.querySelectorAll('.history-item').forEach((el) => {
-									el.classList.remove('active');
 								});
-								item.classList.add('active');
+							}
 
-								// 히스토리 항목 클릭 이벤트 다시 등록
-								setupHistoryClickEvents(container, history, requestId, historyHtml);
-								
-								// 히스토리 삭제 버튼 이벤트 다시 등록
-								setupHistoryDeleteEvents(container, requestId);
-							}
-						});
-					});
-				};
-				
-				const setupHistoryDeleteEvents = (container, requestId) => {
-					if (!requestId) return;
-					
-					container.querySelectorAll('.history-delete-btn').forEach((deleteBtn) => {
-						deleteBtn.addEventListener('click', (e) => {
-							e.stopPropagation(); // 클릭 이벤트 전파 방지
-							
-							const historyItem = deleteBtn.closest('.history-item');
-							if (!historyItem) return;
-							
-							const historyIndex = parseInt(historyItem.dataset.historyIndex);
-							if (isNaN(historyIndex)) return;
-							
-							// 확인 다이얼로그
-							if (!confirm('이 히스토리 항목을 삭제하시겠습니까?')) {
-								return;
-							}
-							
-							// 히스토리 배열에서 제거
-							if (requestHistory[requestId] && requestHistory[requestId][historyIndex]) {
-								requestHistory[requestId].splice(historyIndex, 1);
-								
-								// localStorage 업데이트
-								if (requestHistory[requestId].length > 0) {
-									localStorage.setItem(`requestHistory_${requestId}`, JSON.stringify(requestHistory[requestId]));
-								} else {
-									localStorage.removeItem(`requestHistory_${requestId}`);
-									delete requestHistory[requestId];
-								}
-								
-								// 화면 다시 렌더링
-								const responseContent = container.closest('.response-content') || container;
-								renderResponseBox(responseContent, responseCache[requestId], requestId);
-							}
-						});
-					});
-				};
+							// 선택된 히스토리 항목 하이라이트
+							container.querySelectorAll('.history-item').forEach((el) => {
+								el.classList.remove('active');
+							});
+							item.classList.add('active');
 
-				const renderResponseBox = (container, response, requestId = null) => {
-					// 히스토리 불러오기
-					let history = [];
-					if (requestId) {
-						const savedHistory = localStorage.getItem(`requestHistory_${requestId}`);
-						if (savedHistory) {
-							try {
-								history = JSON.parse(savedHistory);
-								requestHistory[requestId] = history;
-							} catch (e) {
-								console.error('히스토리 파싱 오류', e);
+							// 히스토리 항목 클릭 이벤트 다시 등록
+							setupHistoryClickEvents(container, history, requestId, historyHtml);
+
+							// 히스토리 삭제 버튼 이벤트 다시 등록
+							setupHistoryDeleteEvents(container, requestId);
+						}
+					});
+				});
+			};
+
+			const setupHistoryDeleteEvents = (container, requestId) => {
+				if (!requestId) return;
+
+				container.querySelectorAll('.history-delete-btn').forEach((deleteBtn) => {
+					deleteBtn.addEventListener('click', (e) => {
+						e.stopPropagation(); // 클릭 이벤트 전파 방지
+
+						const historyItem = deleteBtn.closest('.history-item');
+						if (!historyItem) return;
+
+						const historyIndex = parseInt(historyItem.dataset.historyIndex);
+						if (isNaN(historyIndex)) return;
+
+						// 확인 다이얼로그
+						if (!confirm('이 히스토리 항목을 삭제하시겠습니까?')) {
+							return;
+						}
+
+						// 히스토리 배열에서 제거
+						if (requestHistory[requestId] && requestHistory[requestId][historyIndex]) {
+							requestHistory[requestId].splice(historyIndex, 1);
+
+							// localStorage 업데이트
+							if (requestHistory[requestId].length > 0) {
+								localStorage.setItem(`requestHistory_${requestId}`, JSON.stringify(requestHistory[requestId]));
+							} else {
+								localStorage.removeItem(`requestHistory_${requestId}`);
+								delete requestHistory[requestId];
 							}
+
+							// 화면 다시 렌더링
+							const responseContent = container.closest('.response-content') || container;
+							renderResponseBox(responseContent, responseCache[requestId], requestId);
+						}
+					});
+				});
+			};
+
+			const renderResponseBox = (container, response, requestId = null) => {
+				// 히스토리 불러오기
+				let history = [];
+				if (requestId) {
+					const savedHistory = localStorage.getItem(`requestHistory_${requestId}`);
+					if (savedHistory) {
+						try {
+							history = JSON.parse(savedHistory);
+							requestHistory[requestId] = history;
+						} catch (e) {
+							console.error('히스토리 파싱 오류', e);
 						}
 					}
+				}
 
-					if (!response && history.length === 0) {
-						container.innerHTML = '<p class="response-empty">아직 전송 결과가 없습니다.</p>';
-						return;
-					}
+				if (!response && history.length === 0) {
+					container.innerHTML = '<p class="response-empty">아직 전송 결과가 없습니다.</p>';
+					return;
+				}
 
-					const { status, ok, timestamp, headers, body, error } = response || {};
-					const statusClass = ok ? 'status-badge success' : 'status-badge error';
+				const { status, ok, timestamp, headers, body, error } = response || {};
+				const statusClass = ok ? 'status-badge success' : 'status-badge error';
 
-					const headerEntries = Object.entries(headers || {});
-					const headerHtml = headerEntries.length
-						? `<div class="response-headers"><h4>Headers</h4><pre>${headerEntries
-								.map(([key, value]) => `${key}: ${value}`)
-								.join('\n')}</pre></div>`
-						: '';
+				const headerEntries = Object.entries(headers || {});
+				const headerHtml = headerEntries.length
+					? `<div class="response-headers"><h4>Headers</h4><pre>${headerEntries
+						.map(([key, value]) => `${key}: ${value}`)
+						.join('\n')}</pre></div>`
+					: '';
 
-					let bodyHtml = '';
-					let imageHtml = '';
-					let images = [];
-					
-					if (body) {
-						// base64 이미지 찾기
-						images = findBase64Images(body);
-						
-						if (images.length > 0) {
-							imageHtml = '<div class="response-images"><h4>이미지</h4><div class="image-gallery">';
-							images.forEach((img, index) => {
-								imageHtml += `
+				let bodyHtml = '';
+				let imageHtml = '';
+				let images = [];
+
+				if (body) {
+					// base64 이미지 찾기
+					images = findBase64Images(body);
+
+					if (images.length > 0) {
+						imageHtml = '<div class="response-images"><h4>이미지</h4><div class="image-gallery">';
+						images.forEach((img, index) => {
+							imageHtml += `
 									<div class="image-item">
 										<img src="${img.data}" alt="Image ${index + 1}" class="response-image" />
 										${img.path ? `<small class="image-path">${img.path}</small>` : ''}
@@ -939,25 +942,25 @@
 										</button>
 									</div>
 								`;
-							});
-							imageHtml += '</div></div>';
-						}
-						
-						bodyHtml = `<div class="response-body"><h4>Body</h4><pre>${body}</pre></div>`;
+						});
+						imageHtml += '</div></div>';
 					}
 
-					const errorHtml = error ? `<p class="response-error">${error}</p>` : '';
+					bodyHtml = `<div class="response-body"><h4>Body</h4><pre>${body}</pre></div>`;
+				}
 
-					// 히스토리 목록 HTML 생성
-					let historyHtml = '';
-					if (history.length > 0) {
-						historyHtml = '<div class="response-history"><h4>요청 히스토리</h4><div class="history-list">';
-						// 최신순으로 정렬
-						const sortedHistory = [...history].reverse();
-						sortedHistory.forEach((item, index) => {
-							const historyStatusClass = item.response.ok ? 'status-badge success' : 'status-badge error';
-							const historyDate = new Date(item.request.timestamp).toLocaleString();
-							historyHtml += `
+				const errorHtml = error ? `<p class="response-error">${error}</p>` : '';
+
+				// 히스토리 목록 HTML 생성
+				let historyHtml = '';
+				if (history.length > 0) {
+					historyHtml = '<div class="response-history"><h4>요청 히스토리</h4><div class="history-list">';
+					// 최신순으로 정렬
+					const sortedHistory = [...history].reverse();
+					sortedHistory.forEach((item, index) => {
+						const historyStatusClass = item.response.ok ? 'status-badge success' : 'status-badge error';
+						const historyDate = new Date(item.request.timestamp).toLocaleString();
+						historyHtml += `
 								<div class="history-item" data-history-index="${history.length - 1 - index}">
 									<div class="history-item-header">
 										<span class="${historyStatusClass}">${item.response.status}</span>
@@ -967,11 +970,11 @@
 									</div>
 								</div>
 							`;
-						});
-						historyHtml += '</div></div>';
-					}
+					});
+					historyHtml += '</div></div>';
+				}
 
-					container.innerHTML = `
+				container.innerHTML = `
 						${historyHtml}
 						<div class="response-left">
 							<div class="response-meta">
@@ -985,1317 +988,1318 @@
 						${imageHtml}
 					`;
 
-					// 다운로드 버튼 이벤트 리스너 추가
-					if (images.length > 0) {
-						container.querySelectorAll('.download-image-btn').forEach((btn, index) => {
-							btn.addEventListener('click', () => {
-								const img = images[index];
-								downloadImage(img.data, img.type, index);
-							});
+				// 다운로드 버튼 이벤트 리스너 추가
+				if (images.length > 0) {
+					container.querySelectorAll('.download-image-btn').forEach((btn, index) => {
+						btn.addEventListener('click', () => {
+							const img = images[index];
+							downloadImage(img.data, img.type, index);
 						});
-					}
+					});
+				}
 
-					// 히스토리 항목 클릭 이벤트 설정
-					if (history.length > 0 && requestId) {
-						setupHistoryClickEvents(container, history, requestId, historyHtml);
-						setupHistoryDeleteEvents(container, requestId);
-					}
-				};
+				// 히스토리 항목 클릭 이벤트 설정
+				if (history.length > 0 && requestId) {
+					setupHistoryClickEvents(container, history, requestId, historyHtml);
+					setupHistoryDeleteEvents(container, requestId);
+				}
+			};
 
-				const replaceParamsInJson = (jsonString, params) => {
-					if (!jsonString || !params || params.length === 0) {
-						return jsonString;
-					}
+			const replaceParamsInJson = (jsonString, params) => {
+				if (!jsonString || !params || params.length === 0) {
+					return jsonString;
+				}
 
-					// Params를 객체로 변환 (줄바꿈을 \n으로 변환)
-					const paramsMap = {};
-					params.forEach(({ key, value, type }) => {
-						if (key) {
-							// int 타입일 때 숫자로 변환
-							if (type === 'int') {
-								const numValue = Number(value);
-								if (!isNaN(numValue)) {
-									paramsMap[key] = numValue;
-								} else {
-									paramsMap[key] = value || '0';
-								}
+				// Params를 객체로 변환 (줄바꿈을 \n으로 변환)
+				const paramsMap = {};
+				params.forEach(({ key, value, type }) => {
+					if (key) {
+						// int 타입일 때 숫자로 변환
+						if (type === 'int') {
+							const numValue = Number(value);
+							if (!isNaN(numValue)) {
+								paramsMap[key] = numValue;
 							} else {
-								// 줄바꿈 문자를 \n 문자열로 변환
-								const convertedValue = String(value)
-									.replace(/\r\n/g, '\\n')
-									.replace(/\r/g, '\\n')
-									.replace(/\n/g, '\\n');
-								paramsMap[key] = convertedValue;
+								paramsMap[key] = value || '0';
 							}
-						}
-					});
-
-					// {{key}} 형태의 플레이스홀더를 실제 값으로 치환
-					let result = jsonString;
-					Object.keys(paramsMap).forEach((key) => {
-						const placeholder = `{{${key}}}`;
-						const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-						const replacement = paramsMap[key];
-						
-						// int 타입일 때는 따옴표를 제거하고 숫자로 치환
-						if (typeof replacement === 'number') {
-							// 플레이스홀더가 따옴표 안에 있는 경우: "{{key}}" → 숫자로 치환 (따옴표 제거)
-							const quotedRegex = new RegExp(`"${escapedPlaceholder}"`, 'g');
-							result = result.replace(quotedRegex, String(replacement));
-							
-							// 따옴표 없이 사용된 경우: {{key}} → 숫자로 치환
-							const unquotedRegex = new RegExp(escapedPlaceholder, 'g');
-							result = result.replace(unquotedRegex, String(replacement));
 						} else {
-							// 문자열 처리
-							// 플레이스홀더가 따옴표 안에 있는 경우: "{{key}}" → 이스케이프된 값만 삽입
-							const quotedRegex = new RegExp(`"${escapedPlaceholder}"`, 'g');
-							// JSON.stringify 결과에서 바깥 따옴표 제거 (이스케이프는 유지)
-							const escapedValue = JSON.stringify(replacement).slice(1, -1);
-							result = result.replace(quotedRegex, `"${escapedValue}"`);
-							
-							// 따옴표 밖에 있는 경우: {{key}} → JSON.stringify 사용
-							const unquotedRegex = new RegExp(escapedPlaceholder, 'g');
-							result = result.replace(unquotedRegex, JSON.stringify(replacement));
+							// 줄바꿈 문자를 \n 문자열로 변환
+							const convertedValue = String(value)
+								.replace(/\r\n/g, '\\n')
+								.replace(/\r/g, '\\n')
+								.replace(/\n/g, '\\n');
+							paramsMap[key] = convertedValue;
 						}
-					});
+					}
+				});
 
-					return result;
+				// {{key}} 형태의 플레이스홀더를 실제 값으로 치환
+				let result = jsonString;
+				Object.keys(paramsMap).forEach((key) => {
+					const placeholder = `{{${key}}}`;
+					const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+					const replacement = paramsMap[key];
+
+					// int 타입일 때는 따옴표를 제거하고 숫자로 치환
+					if (typeof replacement === 'number') {
+						// 플레이스홀더가 따옴표 안에 있는 경우: "{{key}}" → 숫자로 치환 (따옴표 제거)
+						const quotedRegex = new RegExp(`"${escapedPlaceholder}"`, 'g');
+						result = result.replace(quotedRegex, String(replacement));
+
+						// 따옴표 없이 사용된 경우: {{key}} → 숫자로 치환
+						const unquotedRegex = new RegExp(escapedPlaceholder, 'g');
+						result = result.replace(unquotedRegex, String(replacement));
+					} else {
+						// 문자열 처리
+						// 플레이스홀더가 따옴표 안에 있는 경우: "{{key}}" → 이스케이프된 값만 삽입
+						const quotedRegex = new RegExp(`"${escapedPlaceholder}"`, 'g');
+						// JSON.stringify 결과에서 바깥 따옴표 제거 (이스케이프는 유지)
+						const escapedValue = JSON.stringify(replacement).slice(1, -1);
+						result = result.replace(quotedRegex, `"${escapedValue}"`);
+
+						// 따옴표 밖에 있는 경우: {{key}} → JSON.stringify 사용
+						const unquotedRegex = new RegExp(escapedPlaceholder, 'g');
+						result = result.replace(unquotedRegex, JSON.stringify(replacement));
+					}
+				});
+
+				return result;
+			};
+
+			const sendRequest = async ({ id, method, url, headersArray = [], apiKey, payload, params = [], buttonEl, responseEl }) => {
+				if (!url) {
+					alert('URL을 입력해주세요.');
+					return;
+				}
+
+				buttonEl.disabled = true;
+				const originalText = buttonEl.textContent;
+				buttonEl.textContent = '전송 중...';
+
+				const headers = headersArrayToObject(headersArray);
+				if (apiKey && !headers['X-API-Key']) {
+					headers['X-API-Key'] = apiKey;
+				}
+				const options = {
+					method,
+					headers,
 				};
 
-				const sendRequest = async ({ id, method, url, headersArray = [], apiKey, payload, params = [], buttonEl, responseEl }) => {
-					if (!url) {
-						alert('URL을 입력해주세요.');
-						return;
+				if (!['GET', 'HEAD'].includes(method)) {
+					let parsedBody = payload;
+
+					// Params 값으로 플레이스홀더 치환
+					if (params && params.length > 0) {
+						parsedBody = replaceParamsInJson(parsedBody, params);
 					}
-
-					buttonEl.disabled = true;
-					const originalText = buttonEl.textContent;
-					buttonEl.textContent = '전송 중...';
-
-					const headers = headersArrayToObject(headersArray);
-					if (apiKey && !headers['X-API-Key']) {
-						headers['X-API-Key'] = apiKey;
-					}
-					const options = {
-						method,
-						headers,
-					};
-
-					if (!['GET', 'HEAD'].includes(method)) {
-						let parsedBody = payload;
-						
-						// Params 값으로 플레이스홀더 치환
-						if (params && params.length > 0) {
-							parsedBody = replaceParamsInJson(parsedBody, params);
-						}
-						console.log(parsedBody);
-
-						try {
-							parsedBody = parsedBody ? JSON.stringify(JSON.parse(parsedBody)) : '';
-						} catch (error) {
-							alert('Json-data 형식이 올바르지 않습니다.');
-							buttonEl.disabled = false;
-							buttonEl.textContent = originalText;
-							return;
-						}
-
-						options.body = parsedBody || '';
-						if (parsedBody && !headers['Content-Type']) {
-							headers['Content-Type'] = 'application/json';
-						}
-					}
-
-					// 요청 데이터 저장
-					const requestData = {
-						method,
-						url,
-						headers: { ...headers },
-						body: options.body || null,
-						timestamp: Date.now(),
-					};
+					console.log(parsedBody);
 
 					try {
-						const response = await fetch(url, options);
-						const text = await response.text();
-						let prettyBody = text;
-						try {
-							prettyBody = JSON.stringify(JSON.parse(text), null, 2);
-						} catch (_) {
-							// keep raw text
-						}
-
-						const collectedHeaders = {};
-						response.headers.forEach((value, key) => {
-							collectedHeaders[key] = value;
-						});
-
-						const responseData = {
-							ok: response.ok,
-							status: `${response.status} ${response.statusText}`,
-							timestamp: Date.now(),
-							headers: collectedHeaders,
-							body: prettyBody,
-							error: '',
-						};
-
-						responseCache[id] = responseData;
-
-						// 히스토리에 저장
-						if (!requestHistory[id]) {
-							requestHistory[id] = [];
-						}
-						requestHistory[id].push({
-							request: requestData,
-							response: responseData,
-						});
-
-						// localStorage에 저장 (최대 100개)
-						if (requestHistory[id].length > 100) {
-							requestHistory[id].shift();
-						}
-						localStorage.setItem(`requestHistory_${id}`, JSON.stringify(requestHistory[id]));
+						parsedBody = parsedBody ? JSON.stringify(JSON.parse(parsedBody)) : '';
 					} catch (error) {
-						const responseData = {
-							ok: false,
-							status: 'NETWORK ERROR',
-							timestamp: Date.now(),
-							headers: {},
-							body: '',
-							error: error.message || '요청 중 오류가 발생했습니다.',
-						};
-
-						responseCache[id] = responseData;
-
-						// 히스토리에 저장 (에러도 저장)
-						if (!requestHistory[id]) {
-							requestHistory[id] = [];
-						}
-						requestHistory[id].push({
-							request: requestData,
-							response: responseData,
-						});
-
-						// localStorage에 저장 (최대 100개)
-						if (requestHistory[id].length > 100) {
-							requestHistory[id].shift();
-						}
-						localStorage.setItem(`requestHistory_${id}`, JSON.stringify(requestHistory[id]));
-					} finally {
+						alert('Json-data 형식이 올바르지 않습니다.');
 						buttonEl.disabled = false;
 						buttonEl.textContent = originalText;
-						renderResponseBox(responseEl, responseCache[id], id);
-					}
-				};
-
-				const renderDetails = () => {
-					const current = entries.find((entry) => entry.id === activeId);
-
-					if (!current) {
-						details.classList.add('hidden');
 						return;
 					}
 
-					details.classList.remove('hidden');
-					details.innerHTML = '';
+					options.body = parsedBody || '';
+					if (parsedBody && !headers['Content-Type']) {
+						headers['Content-Type'] = 'application/json';
+					}
+				}
 
-					// 요청 영역
-					const requestSection = document.createElement('div');
-					requestSection.className = 'request-section';
+				// 요청 데이터 저장
+				const requestData = {
+					method,
+					url,
+					headers: { ...headers },
+					body: options.body || null,
+					timestamp: Date.now(),
+				};
 
-					// 상단: Method + URL + Send 버튼 (Postman 스타일)
-					const requestBar = document.createElement('div');
-					requestBar.className = 'request-bar';
+				try {
+					const response = await fetch(url, options);
+					const text = await response.text();
+					let prettyBody = text;
+					try {
+						prettyBody = JSON.stringify(JSON.parse(text), null, 2);
+					} catch (_) {
+						// keep raw text
+					}
 
-					const detailMethod = document.createElement('select');
-					detailMethod.id = 'detailMethod';
-					detailMethod.className = 'request-method-select';
-					HTTP_METHODS.forEach((method) => {
-						const option = document.createElement('option');
-						option.value = method;
-						option.textContent = method;
-						detailMethod.appendChild(option);
-					});
-					detailMethod.value = current.method || 'GET';
-					detailMethod.required = true;
-
-					const detailUrl = document.createElement('input');
-					detailUrl.id = 'detailUrl';
-					detailUrl.type = 'url';
-					detailUrl.className = 'request-url-input';
-					detailUrl.value = current.url;
-					detailUrl.required = true;
-					detailUrl.placeholder = 'https://api.example.com/users';
-
-					const sendBtn = document.createElement('button');
-					sendBtn.type = 'button';
-					sendBtn.className = 'send-button';
-					sendBtn.textContent = 'Send';
-
-					requestBar.appendChild(detailMethod);
-					requestBar.appendChild(detailUrl);
-					requestBar.appendChild(sendBtn);
-
-					// 탭 영역
-					const tabsContainer = document.createElement('div');
-					tabsContainer.className = 'tabs-container';
-
-					const tabsNav = document.createElement('div');
-					tabsNav.className = 'tabs-nav';
-
-					const paramsTab = document.createElement('button');
-					paramsTab.type = 'button';
-					paramsTab.className = `tab-nav-item ${activeTab === 'params' ? 'active' : ''}`;
-					paramsTab.textContent = 'Params';
-					paramsTab.dataset.tab = 'params';
-
-					const headersTab = document.createElement('button');
-					headersTab.type = 'button';
-					headersTab.className = `tab-nav-item ${activeTab === 'headers' ? 'active' : ''}`;
-					headersTab.textContent = 'Headers';
-					headersTab.dataset.tab = 'headers';
-
-					const bodyTab = document.createElement('button');
-					bodyTab.type = 'button';
-					bodyTab.className = `tab-nav-item ${activeTab === 'body' ? 'active' : ''}`;
-					bodyTab.textContent = 'Body';
-					bodyTab.dataset.tab = 'body';
-
-					tabsNav.appendChild(paramsTab);
-					tabsNav.appendChild(headersTab);
-					tabsNav.appendChild(bodyTab);
-
-					const tabsContent = document.createElement('div');
-					tabsContent.className = 'tabs-content';
-
-					// Params 탭
-					const paramsPanel = document.createElement('div');
-					paramsPanel.className = `tab-panel ${activeTab === 'params' ? '' : 'hidden'}`;
-					paramsPanel.id = 'tab-panel-params';
-
-					const detailParamList = document.createElement('div');
-					detailParamList.className = 'params-list';
-
-					const detailParamAddBtn = document.createElement('button');
-					detailParamAddBtn.type = 'button';
-					detailParamAddBtn.className = 'ghost-btn slim-btn';
-					detailParamAddBtn.textContent = '파라미터 추가';
-					detailParamAddBtn.addEventListener('click', () => {
-						detailParamList.appendChild(createParamRowElement());
+					const collectedHeaders = {};
+					response.headers.forEach((value, key) => {
+						collectedHeaders[key] = value;
 					});
 
-					initParamList(detailParamList, current.params || []);
-
-					paramsPanel.appendChild(detailParamList);
-					paramsPanel.appendChild(detailParamAddBtn);
-
-					// Headers 탭
-					const headersPanel = document.createElement('div');
-					headersPanel.className = `tab-panel ${activeTab === 'headers' ? '' : 'hidden'}`;
-					headersPanel.id = 'tab-panel-headers';
-
-					const detailHeaderList = document.createElement('div');
-					detailHeaderList.className = 'headers-list';
-
-					const detailHeaderAddBtn = document.createElement('button');
-					detailHeaderAddBtn.type = 'button';
-					detailHeaderAddBtn.className = 'ghost-btn slim-btn';
-					detailHeaderAddBtn.textContent = '헤더 추가';
-					detailHeaderAddBtn.addEventListener('click', () => {
-						detailHeaderList.appendChild(createHeaderRowElement());
-					});
-
-					initHeaderList(detailHeaderList, current.headers?.length ? current.headers : parseHeadersText(current.headersText));
-
-					headersPanel.appendChild(detailHeaderList);
-					headersPanel.appendChild(detailHeaderAddBtn);
-
-					// Body 탭
-					const bodyPanel = document.createElement('div');
-					bodyPanel.className = `tab-panel ${activeTab === 'body' ? '' : 'hidden'}`;
-					bodyPanel.id = 'tab-panel-body';
-
-					const detailJsonContainer = document.createElement('div');
-					detailJsonContainer.id = 'detailJson';
-					detailJsonContainer.className = 'monaco-editor-container';
-					detailJsonContainer.style.height = '300px';
-
-					const jsonLabelContainer = document.createElement('div');
-					jsonLabelContainer.className = 'json-label-container';
-					const jsonLabel = document.createElement('label');
-					jsonLabel.textContent = 'JSON Data';
-					jsonLabel.setAttribute('for', 'detailJson');
-					jsonLabel.className = 'field-label';
-					
-					const paramsHelp = document.createElement('small');
-					paramsHelp.className = 'params-help-text';
-					paramsHelp.textContent = 'Params의 key 값을 {{keyName}} 형태로 사용할 수 있습니다.';
-					paramsHelp.style.display = 'block';
-					paramsHelp.style.marginTop = '4px';
-					paramsHelp.style.color = '#94a3b8';
-					paramsHelp.style.fontSize = '11px';
-
-					const formatJsonBtn = document.createElement('button');
-					formatJsonBtn.type = 'button';
-					formatJsonBtn.className = 'format-json-btn';
-					formatJsonBtn.textContent = '포맷';
-					formatJsonBtn.title = 'JSON 포맷팅 (Ctrl+Shift+F)';
-					formatJsonBtn.addEventListener('click', async () => {
-						const editor = monacoEditorInstances['detailJson'];
-						if (editor) {
-							try {
-								editor.getAction('editor.action.formatDocument').run();
-							} catch (error) {
-								alert('포맷팅 중 오류가 발생했습니다.');
-							}
-						}
-					});
-
-					jsonLabelContainer.appendChild(jsonLabel);
-					jsonLabelContainer.appendChild(formatJsonBtn);
-
-					bodyPanel.appendChild(jsonLabelContainer);
-					bodyPanel.appendChild(paramsHelp);
-					bodyPanel.appendChild(detailJsonContainer);
-
-					// Params 값 가져오기 함수 (현재 활성화된 요청의 params만 참조)
-					const getParamValue = (key) => {
-						// 현재 활성화된 요청의 detailParamList 찾기
-						const currentDetailParamList = document.querySelector('#tab-panel-params .params-list');
-						if (!currentDetailParamList) return null;
-						
-						const paramRow = Array.from(currentDetailParamList.querySelectorAll('.param-row')).find((row) => {
-							const keyInput = row.querySelector('.param-key');
-							return keyInput && keyInput.value.trim() === key;
-						});
-						
-						if (!paramRow) return null;
-						
-						const typeSelect = paramRow.querySelector('.param-type');
-						const type = typeSelect ? typeSelect.value : 'text';
-						let value = '';
-						let base64Data = null;
-						let fileType = null;
-						
-						if (type === 'file') {
-							const fileInput = paramRow.querySelector('.param-value-file');
-							if (fileInput && fileInput.dataset.base64) {
-								base64Data = fileInput.dataset.base64;
-								fileType = fileInput.dataset.fileType || null;
-								value = fileInput.dataset.fileName || '파일 업로드됨';
-							} else if (fileInput && fileInput.dataset.fileName) {
-								value = fileInput.dataset.fileName;
-							} else {
-								value = '파일 미선택';
-							}
-						} else {
-							const textInput = paramRow.querySelector('.param-value');
-							if (textInput) {
-								value = textInput.value || '(빈 값)';
-								
-								// text 타입의 값이 순수 base64 이미지인지 확인
-								if (value && value.length >= 100 && /^[A-Za-z0-9+/=]+$/.test(value)) {
-									const detectedImageType = detectImageTypeFromBase64(value);
-									if (detectedImageType) {
-										base64Data = value;
-										fileType = `image/${detectedImageType}`;
-									}
-								}
-							}
-						}
-						
-						return { value, type, base64Data, fileType };
+					const responseData = {
+						ok: response.ok,
+						status: `${response.status} ${response.statusText}`,
+						timestamp: Date.now(),
+						headers: collectedHeaders,
+						body: prettyBody,
+						error: '',
 					};
 
-					// Monaco Editor 초기화 (비동기)
-					setTimeout(async () => {
-						const editor = await initMonacoEditor('detailJson', current.jsonData || '');
-						
-						// 플레이스홀더 동기화 기능
-						if (editor) {
-							// 커스텀 미리보기 툴팁 생성 (이미지와 텍스트 모두 표시)
-							let previewTooltip = null;
-							const createPreviewTooltip = () => {
-								if (!previewTooltip) {
-									previewTooltip = document.createElement('div');
-									previewTooltip.id = 'custom-preview-tooltip';
-									previewTooltip.style.cssText = 'position:fixed;z-index:10000;background:#000;border:1px solid #e0e0e0;border-radius:4px;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:none;pointer-events:none;max-width:400px;max-height:500px;overflow:auto;opacity:0.8;color:#fff;';
-									document.body.appendChild(previewTooltip);
+					responseCache[id] = responseData;
+
+					// 히스토리에 저장
+					if (!requestHistory[id]) {
+						requestHistory[id] = [];
+					}
+					requestHistory[id].push({
+						request: requestData,
+						response: responseData,
+					});
+
+					// localStorage에 저장 (최대 100개)
+					if (requestHistory[id].length > 100) {
+						requestHistory[id].shift();
+					}
+					localStorage.setItem(`requestHistory_${id}`, JSON.stringify(requestHistory[id]));
+				} catch (error) {
+					const responseData = {
+						ok: false,
+						status: 'NETWORK ERROR',
+						timestamp: Date.now(),
+						headers: {},
+						body: '',
+						error: error.message || '요청 중 오류가 발생했습니다.',
+					};
+
+					responseCache[id] = responseData;
+
+					// 히스토리에 저장 (에러도 저장)
+					if (!requestHistory[id]) {
+						requestHistory[id] = [];
+					}
+					requestHistory[id].push({
+						request: requestData,
+						response: responseData,
+					});
+
+					// localStorage에 저장 (최대 100개)
+					if (requestHistory[id].length > 100) {
+						requestHistory[id].shift();
+					}
+					localStorage.setItem(`requestHistory_${id}`, JSON.stringify(requestHistory[id]));
+				} finally {
+					buttonEl.disabled = false;
+					buttonEl.textContent = originalText;
+					renderResponseBox(responseEl, responseCache[id], id);
+				}
+			};
+
+			const renderDetails = () => {
+				const current = entries.find((entry) => entry.id === activeId);
+
+				if (!current) {
+					details.classList.add('hidden');
+					return;
+				}
+
+				details.classList.remove('hidden');
+				details.innerHTML = '';
+
+				// 요청 영역
+				const requestSection = document.createElement('div');
+				requestSection.className = 'request-section';
+
+				// 상단: Method + URL + Send 버튼 (Postman 스타일)
+				const requestBar = document.createElement('div');
+				requestBar.className = 'request-bar';
+
+				const detailMethod = document.createElement('select');
+				detailMethod.id = 'detailMethod';
+				detailMethod.className = 'request-method-select';
+				HTTP_METHODS.forEach((method) => {
+					const option = document.createElement('option');
+					option.value = method;
+					option.textContent = method;
+					detailMethod.appendChild(option);
+				});
+				detailMethod.value = current.method || 'GET';
+				detailMethod.required = true;
+
+				const detailUrl = document.createElement('input');
+				detailUrl.id = 'detailUrl';
+				detailUrl.type = 'url';
+				detailUrl.className = 'request-url-input';
+				detailUrl.value = current.url;
+				detailUrl.required = true;
+				detailUrl.placeholder = 'https://api.example.com/users';
+
+				const sendBtn = document.createElement('button');
+				sendBtn.type = 'button';
+				sendBtn.className = 'send-button';
+				sendBtn.textContent = 'Send';
+
+				requestBar.appendChild(detailMethod);
+				requestBar.appendChild(detailUrl);
+				requestBar.appendChild(sendBtn);
+
+				// 탭 영역
+				const tabsContainer = document.createElement('div');
+				tabsContainer.className = 'tabs-container';
+
+				const tabsNav = document.createElement('div');
+				tabsNav.className = 'tabs-nav';
+
+				const paramsTab = document.createElement('button');
+				paramsTab.type = 'button';
+				paramsTab.className = `tab-nav-item ${activeTab === 'params' ? 'active' : ''}`;
+				paramsTab.textContent = 'Params';
+				paramsTab.dataset.tab = 'params';
+
+				const headersTab = document.createElement('button');
+				headersTab.type = 'button';
+				headersTab.className = `tab-nav-item ${activeTab === 'headers' ? 'active' : ''}`;
+				headersTab.textContent = 'Headers';
+				headersTab.dataset.tab = 'headers';
+
+				const bodyTab = document.createElement('button');
+				bodyTab.type = 'button';
+				bodyTab.className = `tab-nav-item ${activeTab === 'body' ? 'active' : ''}`;
+				bodyTab.textContent = 'Body';
+				bodyTab.dataset.tab = 'body';
+
+				tabsNav.appendChild(paramsTab);
+				tabsNav.appendChild(headersTab);
+				tabsNav.appendChild(bodyTab);
+
+				const tabsContent = document.createElement('div');
+				tabsContent.className = 'tabs-content';
+
+				// Params 탭
+				const paramsPanel = document.createElement('div');
+				paramsPanel.className = `tab-panel ${activeTab === 'params' ? '' : 'hidden'}`;
+				paramsPanel.id = 'tab-panel-params';
+
+				const detailParamList = document.createElement('div');
+				detailParamList.className = 'params-list';
+
+				const detailParamAddBtn = document.createElement('button');
+				detailParamAddBtn.type = 'button';
+				detailParamAddBtn.className = 'ghost-btn slim-btn';
+				detailParamAddBtn.textContent = '파라미터 추가';
+				detailParamAddBtn.addEventListener('click', () => {
+					detailParamList.appendChild(createParamRowElement());
+				});
+
+				initParamList(detailParamList, current.params || []);
+
+				paramsPanel.appendChild(detailParamList);
+				paramsPanel.appendChild(detailParamAddBtn);
+
+				// Headers 탭
+				const headersPanel = document.createElement('div');
+				headersPanel.className = `tab-panel ${activeTab === 'headers' ? '' : 'hidden'}`;
+				headersPanel.id = 'tab-panel-headers';
+
+				const detailHeaderList = document.createElement('div');
+				detailHeaderList.className = 'headers-list';
+
+				const detailHeaderAddBtn = document.createElement('button');
+				detailHeaderAddBtn.type = 'button';
+				detailHeaderAddBtn.className = 'ghost-btn slim-btn';
+				detailHeaderAddBtn.textContent = '헤더 추가';
+				detailHeaderAddBtn.addEventListener('click', () => {
+					detailHeaderList.appendChild(createHeaderRowElement());
+				});
+
+				initHeaderList(detailHeaderList, current.headers?.length ? current.headers : parseHeadersText(current.headersText));
+
+				headersPanel.appendChild(detailHeaderList);
+				headersPanel.appendChild(detailHeaderAddBtn);
+
+				// Body 탭
+				const bodyPanel = document.createElement('div');
+				bodyPanel.className = `tab-panel ${activeTab === 'body' ? '' : 'hidden'}`;
+				bodyPanel.id = 'tab-panel-body';
+
+				const detailJsonContainer = document.createElement('div');
+				detailJsonContainer.id = 'detailJson';
+				detailJsonContainer.className = 'monaco-editor-container';
+				detailJsonContainer.style.height = '300px';
+
+				const jsonLabelContainer = document.createElement('div');
+				jsonLabelContainer.className = 'json-label-container';
+				const jsonLabel = document.createElement('label');
+				jsonLabel.textContent = 'JSON Data';
+				jsonLabel.setAttribute('for', 'detailJson');
+				jsonLabel.className = 'field-label';
+
+				const paramsHelp = document.createElement('small');
+				paramsHelp.className = 'params-help-text';
+				paramsHelp.textContent = 'Params의 key 값을 {{keyName}} 형태로 사용할 수 있습니다.';
+				paramsHelp.style.display = 'block';
+				paramsHelp.style.marginTop = '4px';
+				paramsHelp.style.color = '#94a3b8';
+				paramsHelp.style.fontSize = '11px';
+
+				const formatJsonBtn = document.createElement('button');
+				formatJsonBtn.type = 'button';
+				formatJsonBtn.className = 'format-json-btn';
+				formatJsonBtn.textContent = '포맷';
+				formatJsonBtn.title = 'JSON 포맷팅 (Ctrl+Shift+F)';
+				formatJsonBtn.addEventListener('click', async () => {
+					const editor = monacoEditorInstances['detailJson'];
+					if (editor) {
+						try {
+							editor.getAction('editor.action.formatDocument').run();
+						} catch (error) {
+							alert('포맷팅 중 오류가 발생했습니다.');
+						}
+					}
+				});
+
+				jsonLabelContainer.appendChild(jsonLabel);
+				jsonLabelContainer.appendChild(formatJsonBtn);
+
+				bodyPanel.appendChild(jsonLabelContainer);
+				bodyPanel.appendChild(paramsHelp);
+				bodyPanel.appendChild(detailJsonContainer);
+
+				// Params 값 가져오기 함수 (현재 활성화된 요청의 params만 참조)
+				const getParamValue = (key) => {
+					// 현재 활성화된 요청의 detailParamList 찾기
+					const currentDetailParamList = document.querySelector('#tab-panel-params .params-list');
+					if (!currentDetailParamList) return null;
+
+					const paramRow = Array.from(currentDetailParamList.querySelectorAll('.param-row')).find((row) => {
+						const keyInput = row.querySelector('.param-key');
+						return keyInput && keyInput.value.trim() === key;
+					});
+
+					if (!paramRow) return null;
+
+					const typeSelect = paramRow.querySelector('.param-type');
+					const type = typeSelect ? typeSelect.value : 'text';
+					let value = '';
+					let base64Data = null;
+					let fileType = null;
+
+					if (type === 'file') {
+						const fileInput = paramRow.querySelector('.param-value-file');
+						if (fileInput && fileInput.dataset.base64) {
+							base64Data = fileInput.dataset.base64;
+							fileType = fileInput.dataset.fileType || null;
+							value = fileInput.dataset.fileName || '파일 업로드됨';
+						} else if (fileInput && fileInput.dataset.fileName) {
+							value = fileInput.dataset.fileName;
+						} else {
+							value = '파일 미선택';
+						}
+					} else {
+						const textInput = paramRow.querySelector('.param-value');
+						if (textInput) {
+							value = textInput.value || '(빈 값)';
+
+							// text 타입의 값이 순수 base64 이미지인지 확인
+							if (value && value.length >= 100 && /^[A-Za-z0-9+/=]+$/.test(value)) {
+								const detectedImageType = detectImageTypeFromBase64(value);
+								if (detectedImageType) {
+									base64Data = value;
+									fileType = `image/${detectedImageType}`;
 								}
-								return previewTooltip;
-							};
-							
-							const showPreviewTooltip = (content, contentType, x, y) => {
-								const tooltip = createPreviewTooltip();
-								
-								if (contentType === 'image') {
-									tooltip.innerHTML = `<img src="${content.replace(/"/g, '&quot;')}" style="max-width:300px;max-height:300px;display:block;border-radius:4px;" />`;
-								} else if (contentType === 'text') {
-									// 텍스트는 줄바꿈을 유지하고 스크롤 가능하게 표시
-									const escapedText = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-									const formattedText = escapedText.replace(/\n/g, '<br>');
-									tooltip.innerHTML = `<div style="white-space:pre-wrap;word-wrap:break-word;font-family:monospace;font-size:12px;line-height:1.5;max-height:400px;overflow-y:auto;">${formattedText}</div>`;
+							}
+						}
+					}
+
+					return { value, type, base64Data, fileType };
+				};
+
+				// Monaco Editor 초기화 (비동기)
+				setTimeout(async () => {
+					const editor = await initMonacoEditor('detailJson', current.jsonData || '');
+
+					// 플레이스홀더 동기화 기능
+					if (editor) {
+						// 커스텀 미리보기 툴팁 생성 (이미지와 텍스트 모두 표시)
+						let previewTooltip = null;
+						const createPreviewTooltip = () => {
+							if (!previewTooltip) {
+								previewTooltip = document.createElement('div');
+								previewTooltip.id = 'custom-preview-tooltip';
+								previewTooltip.style.cssText = 'position:fixed;z-index:10000;background:#000;border:1px solid #e0e0e0;border-radius:4px;padding:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:none;pointer-events:none;max-width:400px;max-height:500px;overflow:auto;opacity:0.8;color:#fff;';
+								document.body.appendChild(previewTooltip);
+							}
+							return previewTooltip;
+						};
+
+						const showPreviewTooltip = (content, contentType, x, y) => {
+							const tooltip = createPreviewTooltip();
+
+							if (contentType === 'image') {
+								tooltip.innerHTML = `<img src="${content.replace(/"/g, '&quot;')}" style="max-width:300px;max-height:300px;display:block;border-radius:4px;" />`;
+							} else if (contentType === 'text') {
+								// 텍스트는 줄바꿈을 유지하고 스크롤 가능하게 표시
+								const escapedText = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+								const formattedText = escapedText.replace(/\n/g, '<br>');
+								tooltip.innerHTML = `<div style="white-space:pre-wrap;word-wrap:break-word;font-family:monospace;font-size:12px;line-height:1.5;max-height:400px;overflow-y:auto;">${formattedText}</div>`;
+							}
+
+							// 먼저 표시한 후 위치 계산
+							tooltip.style.display = 'block';
+
+							// 오른쪽에 표시 (커서 오른쪽)
+							let left = x + 15;
+							let top = y;
+
+							// 화면 밖으로 나가지 않도록 조정 (툴팁이 표시된 후 크기 계산)
+							setTimeout(() => {
+								const tooltipRect = tooltip.getBoundingClientRect();
+
+								if (left + tooltipRect.width > window.innerWidth) {
+									left = x - tooltipRect.width - 15;
 								}
-								
-								// 먼저 표시한 후 위치 계산
-								tooltip.style.display = 'block';
-								
-								// 오른쪽에 표시 (커서 오른쪽)
-								let left = x + 15;
-								let top = y;
-								
-								// 화면 밖으로 나가지 않도록 조정 (툴팁이 표시된 후 크기 계산)
-								setTimeout(() => {
-									const tooltipRect = tooltip.getBoundingClientRect();
-									
-									if (left + tooltipRect.width > window.innerWidth) {
-										left = x - tooltipRect.width - 15;
-									}
-									if (top + tooltipRect.height > window.innerHeight) {
-										top = window.innerHeight - tooltipRect.height - 10;
-									}
-									if (top < 0) {
-										top = 10;
-									}
-									if (left < 0) {
-										left = 10;
-									}
-									
-									tooltip.style.left = left + 'px';
-									tooltip.style.top = top + 'px';
-								}, 0);
-								
-								// 초기 위치 설정
+								if (top + tooltipRect.height > window.innerHeight) {
+									top = window.innerHeight - tooltipRect.height - 10;
+								}
+								if (top < 0) {
+									top = 10;
+								}
+								if (left < 0) {
+									left = 10;
+								}
+
 								tooltip.style.left = left + 'px';
 								tooltip.style.top = top + 'px';
-							};
-							
-							const hidePreviewTooltip = () => {
-								if (previewTooltip) {
-									previewTooltip.style.display = 'none';
-								}
-							};
-							
-							// Monaco Editor 마우스 이벤트로 이미지 툴팁 표시
-							editor.onMouseMove((e) => {
-								if (e.target.type === monaco.editor.MouseTargetType.CONTENT_TEXT) {
-									const position = e.target.position;
-									if (!position) {
-										hideImageTooltip();
-										return;
-									}
-									
-									const model = editor.getModel();
-									const lineContent = model.getLineContent(position.lineNumber);
-									const placeholderRegex = /\{\{([^}]+)\}\}/g;
-									let match;
-									
-									while ((match = placeholderRegex.exec(lineContent)) !== null) {
-										const start = match.index;
-										const end = start + match[0].length;
-										
-										if (position.column >= start + 1 && position.column <= end) {
-											const key = match[1].trim();
-											const param = getParamValue(key);
-											
-											if (param) {
-												// base64Data가 없으면 value에서 직접 base64 이미지 감지
-												let base64Data = param.base64Data;
-												let fileType = param.fileType;
-												
-												if (!base64Data && param.value && param.value.length >= 100 && /^[A-Za-z0-9+/=]+$/.test(param.value)) {
-													const detectedImageType = detectImageTypeFromBase64(param.value);
-													if (detectedImageType) {
-														base64Data = param.value;
-														fileType = `image/${detectedImageType}`;
-													}
-												}
-												
-												// 마우스 위치 가져오기
-												const mouseEvent = e.event.browserEvent;
-												
-												// 이미지인 경우 이미지 툴팁 표시
-												if (base64Data) {
-													let mimeType = fileType;
-													if (!mimeType || !mimeType.startsWith('image/')) {
-														const detectedType = detectImageTypeFromBase64(base64Data);
-														mimeType = detectedType ? `image/${detectedType}` : 'image/png';
-													}
-													
-													const imageDataUrl = base64Data.startsWith('data:') 
-														? base64Data 
-														: `data:${mimeType};base64,${base64Data}`;
-													
-													showPreviewTooltip(imageDataUrl, 'image', mouseEvent.clientX, mouseEvent.clientY);
-													return;
-												} 
-												// 텍스트인 경우 텍스트 툴팁 표시
-												else if (param.type === 'text' && param.value) {
-													showPreviewTooltip(param.value, 'text', mouseEvent.clientX, mouseEvent.clientY);
-													return;
-												}
-											}
-											break;
-										}
-									}
-								}
-								hidePreviewTooltip();
-							});
-							
-							editor.onMouseLeave(() => {
-								hidePreviewTooltip();
-							});
-
-							// 클릭 이벤트: Ctrl + 클릭 시 플레이스홀더에서 해당 Params로 포커스 이동
-							editor.onMouseDown((e) => {
-								if (e.target.type === monaco.editor.MouseTargetType.CONTENT_TEXT) {
-									const position = e.target.position;
-									if (!position) return;
-									
-									// Ctrl 키 (또는 Mac의 경우 Cmd 키) 체크
-									const browserEvent = e.event.browserEvent;
-									const isCtrlClick = browserEvent.ctrlKey || browserEvent.metaKey;
-									if (!isCtrlClick) return;
-									
-									const model = editor.getModel();
-									const lineContent = model.getLineContent(position.lineNumber);
-									const placeholderRegex = /\{\{([^}]+)\}\}/g;
-									let match;
-									
-									while ((match = placeholderRegex.exec(lineContent)) !== null) {
-										const start = match.index;
-										const end = start + match[0].length;
-										
-										if (position.column >= start + 1 && position.column <= end) {
-											const key = match[1].trim();
-											
-											// 기본 동작 방지
-											e.event.preventDefault();
-											
-											// Params 탭으로 전환
-											switchTab('params');
-											
-											// 해당 키를 가진 파라미터 행 찾기
-											setTimeout(() => {
-												const paramRow = Array.from(detailParamList.querySelectorAll('.param-row')).find((row) => {
-													const keyInput = row.querySelector('.param-key');
-													return keyInput && keyInput.value.trim() === key;
-												});
-												
-												if (paramRow) {
-													// 해당 행으로 스크롤
-													paramRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-													
-													const typeSelect = paramRow.querySelector('.param-type');
-													const type = typeSelect ? typeSelect.value : 'text';
-													
-													// value 입력 필드에 포커스
-													if (type === 'file') {
-														// file 타입인 경우 파일 선택 영역에 포커스 및 테두리 색상
-														const fileInput = paramRow.querySelector('.param-value-file');
-														
-														if (fileInput) {
-															// 파일 입력 필드에 테두리 색상 추가
-															fileInput.style.border = '2px solid #3b82f6';
-															fileInput.style.borderRadius = '6px';
-															fileInput.style.outline = 'none';
-															
-															// 파일 선택 다이얼로그 열기
-															setTimeout(() => {
-																fileInput.click();
-															}, 100);
-															
-															// 2초 후 테두리 색상 제거
-															setTimeout(() => {
-																fileInput.style.border = '';
-																fileInput.style.borderRadius = '';
-																fileInput.style.outline = '';
-															}, 2000);
-														}
-													} else {
-														// text 타입인 경우 텍스트 입력 필드에 포커스
-														const valueInput = paramRow.querySelector('.param-value');
-														if (valueInput) {
-															valueInput.focus();
-															// 텍스트 전체 선택
-															setTimeout(() => {
-																valueInput.select();
-															}, 0);
-														}
-													}
-												}
-											}, 100);
-											
-											break;
-										}
-									}
-								}
-							});
-
-							editor.onDidChangeModelContent(() => {
-								const content = editor.getValue();
-								// {{key}} 형태의 플레이스홀더 찾기
-								const placeholderRegex = /\{\{([^}]+)\}\}/g;
-								const foundKeys = new Set();
-								let match;
-								
-								while ((match = placeholderRegex.exec(content)) !== null) {
-									const key = match[1].trim();
-									if (key) {
-										foundKeys.add(key);
-									}
-								}
-								
-								// 기존 Params 목록의 키와 값 저장
-								const existingParams = new Map();
-								detailParamList.querySelectorAll('.param-row').forEach((row) => {
-									const keyInput = row.querySelector('.param-key');
-									const typeSelect = row.querySelector('.param-type');
-									if (keyInput && keyInput.value.trim()) {
-										const key = keyInput.value.trim();
-										const type = typeSelect ? typeSelect.value : 'text';
-										let value = '';
-										
-										if (type === 'file') {
-											const fileInput = row.querySelector('.param-value-file');
-											if (fileInput && fileInput.dataset.base64) {
-												value = fileInput.dataset.base64;
-											} else if (fileInput && fileInput.dataset.fileName) {
-												value = fileInput.dataset.fileName;
-											}
-										} else {
-											const textInput = row.querySelector('.param-value');
-											if (textInput) {
-												value = textInput.value;
-											}
-										}
-										
-										existingParams.set(key, { value, type });
-									}
-								});
-								
-								// Params 목록 재구성: JSON data에 있는 플레이스홀더만 표시
-								detailParamList.innerHTML = '';
-								
-								if (foundKeys.size > 0) {
-									foundKeys.forEach((key) => {
-										// 기존 값이 있으면 유지, 없으면 빈 값으로 생성
-										const existing = existingParams.get(key);
-										const newRow = createParamRowElement({
-											key,
-											value: existing ? existing.value : '',
-											type: existing ? existing.type : 'text'
-										});
-										detailParamList.appendChild(newRow);
-									});
-								} else {
-									// 플레이스홀더가 없으면 빈 행 하나만 추가
-									detailParamList.appendChild(createParamRowElement());
-								}
-							});
-						}
-					}, 100);
-
-					tabsContent.appendChild(paramsPanel);
-					tabsContent.appendChild(headersPanel);
-					tabsContent.appendChild(bodyPanel);
-
-					tabsContainer.appendChild(tabsNav);
-					tabsContainer.appendChild(tabsContent);
-
-					// 탭 전환 기능
-					const switchTab = (tabName) => {
-						activeTab = tabName; // 선택된 탭 저장
-						document.querySelectorAll('.tab-nav-item').forEach((btn) => btn.classList.remove('active'));
-						document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.add('hidden'));
-						document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-						document.getElementById(`tab-panel-${tabName}`).classList.remove('hidden');
-					};
-
-					paramsTab.addEventListener('click', () => switchTab('params'));
-					headersTab.addEventListener('click', () => switchTab('headers'));
-					bodyTab.addEventListener('click', () => switchTab('body'));
-
-					// Title 입력 (상단에 작게 표시)
-					const titleBar = document.createElement('div');
-					titleBar.className = 'title-bar';
-
-					const detailTitle = document.createElement('input');
-					detailTitle.id = 'detailTitle';
-					detailTitle.className = 'title-input';
-					detailTitle.value = current.title;
-					detailTitle.required = true;
-					detailTitle.placeholder = '요청 이름';
-
-					const saveBtn = document.createElement('button');
-					saveBtn.type = 'button';
-					saveBtn.className = 'save-button';
-					saveBtn.textContent = '저장';
-
-					titleBar.appendChild(detailTitle);
-					titleBar.appendChild(saveBtn);
-
-					requestSection.appendChild(titleBar);
-					requestSection.appendChild(requestBar);
-					requestSection.appendChild(tabsContainer);
-
-					// 응답 영역
-					const responsePanel = document.createElement('section');
-					responsePanel.className = 'response-panel';
-					const responseTitle = document.createElement('h3');
-					responseTitle.textContent = '응답';
-					const responseContent = document.createElement('div');
-					responseContent.className = 'response-content';
-					responsePanel.appendChild(responseTitle);
-					responsePanel.appendChild(responseContent);
-
-					renderResponseBox(responseContent, responseCache[current.id], current.id);
-
-					// 사이즈 조절 선 (resizer) 추가
-					const resizer = document.createElement('div');
-					resizer.className = 'section-resizer';
-					
-					// 드래그 기능 구현
-					let isResizing = false;
-					let startY = 0;
-					let startRequestTop = 0;
-					let startRequestHeight = 0;
-					
-					resizer.addEventListener('mousedown', (e) => {
-						isResizing = true;
-						startY = e.clientY;
-						
-						const requestRect = requestSection.getBoundingClientRect();
-						startRequestTop = requestRect.top;
-						startRequestHeight = requestRect.height;
-						
-						requestSection.style.transition = 'none';
-						responsePanel.style.transition = 'none';
-						
-						document.body.style.cursor = 'ns-resize';
-						document.body.style.userSelect = 'none';
-						
-						document.addEventListener('mousemove', handleMouseMove);
-						document.addEventListener('mouseup', handleMouseUp);
-						e.preventDefault();
-						e.stopPropagation();
-					});
-					
-					const handleMouseMove = (e) => {
-						if (!isResizing) return;
-						
-						const deltaY = e.clientY - startY;
-						const newRequestHeight = startRequestHeight + deltaY;
-						
-						// 최소 높이 제한
-						const minHeight = 200;
-						const detailsHeight = details.offsetHeight;
-						const resizerHeight = resizer.offsetHeight;
-						const maxRequestHeight = detailsHeight - resizerHeight - minHeight;
-						
-						if (newRequestHeight >= minHeight && newRequestHeight <= maxRequestHeight) {
-							requestSection.style.height = newRequestHeight + 'px';
-							requestSection.style.flex = '0 0 auto';
-							
-							const newResponseHeight = detailsHeight - resizerHeight - newRequestHeight;
-							responsePanel.style.height = newResponseHeight + 'px';
-							responsePanel.style.flex = '0 0 auto';
-						}
-					};
-					
-					const handleMouseUp = () => {
-						isResizing = false;
-						requestSection.style.transition = '';
-						responsePanel.style.transition = '';
-						document.body.style.cursor = '';
-						document.body.style.userSelect = '';
-						document.removeEventListener('mousemove', handleMouseMove);
-						document.removeEventListener('mouseup', handleMouseUp);
-					};
-
-					// 저장 기능
-					const saveRequest = () => {
-						const updated = {
-							...current,
-							title: detailTitle.value.trim(),
-							method: detailMethod.value,
-							url: detailUrl.value.trim(),
-							headers: collectHeaderRows(detailHeaderList),
-							params: collectParamRows(detailParamList),
-							apiKey: '', // Body 탭에서 API Key 입력 제거
-							jsonData: getMonacoValue('detailJson').trim(),
-						};
-
-						if (!updated.title || !updated.method || !updated.url || !updated.jsonData) {
-							alert('모든 필수를 입력해주세요.');
-							return;
-						}
-
-						const serializedHeaders = serializeHeaders(updated.headers);
-						updated.headersText = serializedHeaders;
-
-						entries = entries.map((entry) => (entry.id === updated.id ? updated : entry));
-						persistEntries();
-						setActive(updated.id);
-					};
-
-					saveBtn.addEventListener('click', saveRequest);
-
-					// 전송 기능
-					sendBtn.addEventListener('click', () => {
-						sendRequest({
-							id: current.id,
-							method: detailMethod.value,
-							url: detailUrl.value.trim(),
-							headersArray: collectHeaderRows(detailHeaderList),
-							apiKey: '', // Body 탭에서 API Key 입력 제거
-							params: collectParamRows(detailParamList),
-							payload: getMonacoValue('detailJson').trim(),
-							buttonEl: sendBtn,
-							responseEl: responseContent,
-						});
-					});
-
-					details.appendChild(requestSection);
-					details.appendChild(resizer);
-					details.appendChild(responsePanel);
-				};
-
-				const enableCodeEditor = (textarea) => {
-					if (!textarea) return;
-
-					const TAB = '    '; // 4 spaces
-					const getLineStart = (text, pos) => {
-						let start = pos;
-						while (start > 0 && text[start - 1] !== '\n') {
-							start--;
-						}
-						return start;
-					};
-
-					const getLineEnd = (text, pos) => {
-						let end = pos;
-						while (end < text.length && text[end] !== '\n') {
-							end++;
-						}
-						return end;
-					};
-
-					const getSelectedLines = (text, start, end) => {
-						const lineStart = getLineStart(text, start);
-						const lineEnd = getLineEnd(text, end);
-						const selectedText = text.substring(lineStart, lineEnd);
-						const lines = selectedText.split('\n');
-						return { lines, lineStart, lineEnd, firstLineStart: lineStart };
-					};
-
-					const indentLines = (text, start, end, indent) => {
-						const { lines, lineStart, lineEnd } = getSelectedLines(text, start, end);
-						const indentedLines = lines.map((line, index) => {
-							if (line.trim() === '' && index < lines.length - 1) return line;
-							return indent + line;
-						});
-						const newText =
-							text.substring(0, lineStart) +
-							indentedLines.join('\n') +
-							text.substring(lineEnd);
-						const cursorOffset = indent.length;
-						return {
-							newText,
-							newStart: start + (start === lineStart ? cursorOffset : 0),
-							newEnd: end + cursorOffset * lines.length,
-						};
-					};
-
-					const unindentLines = (text, start, end) => {
-						const { lines, lineStart, lineEnd } = getSelectedLines(text, start, end);
-						let totalRemoved = 0;
-						const unindentedLines = lines.map((line, index) => {
-							if (line.trim() === '' && index < lines.length - 1) return line;
-							if (line.startsWith(TAB)) {
-								totalRemoved += TAB.length;
-								return line.substring(TAB.length);
-							}
-							if (line.startsWith(' ')) {
-								const spaces = line.match(/^ +/)?.[0] || '';
-								const toRemove = Math.min(spaces.length, 4);
-								totalRemoved += toRemove;
-								return line.substring(toRemove);
-							}
-							return line;
-						});
-						const newText =
-							text.substring(0, lineStart) +
-							unindentedLines.join('\n') +
-							text.substring(lineEnd);
-						return {
-							newText,
-							newStart: Math.max(lineStart, start - (start === lineStart ? TAB.length : 0)),
-							newEnd: Math.max(lineStart, end - totalRemoved),
-						};
-					};
-
-					textarea.addEventListener('keydown', (event) => {
-						const { selectionStart, selectionEnd, value } = textarea;
-						const isMultiLine = selectionStart !== selectionEnd;
-
-						// Tab 키: 들여쓰기
-						if (event.key === 'Tab' && !event.shiftKey) {
-							event.preventDefault();
-							if (isMultiLine) {
-								// 여러 줄 선택 시 모든 줄에 들여쓰기
-								const { newText, newStart, newEnd } = indentLines(value, selectionStart, selectionEnd, TAB);
-								textarea.value = newText;
-								textarea.selectionStart = newStart;
-								textarea.selectionEnd = newEnd;
-							} else {
-								// 단일 커서: 탭 삽입
-								const before = value.slice(0, selectionStart);
-								const after = value.slice(selectionEnd);
-								const nextCursor = selectionStart + TAB.length;
-								textarea.value = `${before}${TAB}${after}`;
-								textarea.selectionStart = textarea.selectionEnd = nextCursor;
-							}
-						}
-
-						// Shift+Tab: 내어쓰기
-						if (event.key === 'Tab' && event.shiftKey) {
-							event.preventDefault();
-							if (isMultiLine) {
-								// 여러 줄 선택 시 모든 줄에서 내어쓰기
-								const { newText, newStart, newEnd } = unindentLines(value, selectionStart, selectionEnd);
-								textarea.value = newText;
-								textarea.selectionStart = newStart;
-								textarea.selectionEnd = newEnd;
-							}
-						}
-
-						// Enter: 자동 들여쓰기 유지
-						if (event.key === 'Enter') {
-							const before = value.substring(0, selectionStart);
-							const lineStart = getLineStart(value, selectionStart);
-							const currentLine = value.substring(lineStart, selectionStart);
-							const indentMatch = currentLine.match(/^(\s*)/);
-							const currentIndent = indentMatch ? indentMatch[1] : '';
-
-							// 중괄호나 대괄호 뒤에서 Enter를 누르면 추가 들여쓰기
-							const lastChar = currentLine.trim().slice(-1);
-							const shouldIndent = lastChar === '{' || lastChar === '[';
-
-							setTimeout(() => {
-								const newPos = textarea.selectionStart;
-								const beforeNew = textarea.value.substring(0, newPos);
-								const afterNew = textarea.value.substring(newPos);
-								const newIndent = shouldIndent ? currentIndent + TAB : currentIndent;
-								textarea.value = beforeNew + newIndent + afterNew;
-								textarea.selectionStart = textarea.selectionEnd = newPos + newIndent.length;
 							}, 0);
-						}
 
-						// Backspace: 탭 단위로 삭제
-						if (event.key === 'Backspace') {
-							if (selectionStart === selectionEnd) {
-								const before = value.substring(0, selectionStart);
-								if (before.endsWith(TAB)) {
-									event.preventDefault();
-									textarea.value =
-										value.substring(0, selectionStart - TAB.length) +
-										value.substring(selectionEnd);
-									textarea.selectionStart = textarea.selectionEnd = selectionStart - TAB.length;
+							// 초기 위치 설정
+							tooltip.style.left = left + 'px';
+							tooltip.style.top = top + 'px';
+						};
+
+						const hidePreviewTooltip = () => {
+							if (previewTooltip) {
+								previewTooltip.style.display = 'none';
+							}
+						};
+
+						// Monaco Editor 마우스 이벤트로 이미지 툴팁 표시
+						editor.onMouseMove((e) => {
+							if (e.target.type === monaco.editor.MouseTargetType.CONTENT_TEXT) {
+								const position = e.target.position;
+								if (!position) {
+									hideImageTooltip();
+									return;
+								}
+
+								const model = editor.getModel();
+								const lineContent = model.getLineContent(position.lineNumber);
+								const placeholderRegex = /\{\{([^}]+)\}\}/g;
+								let match;
+
+								while ((match = placeholderRegex.exec(lineContent)) !== null) {
+									const start = match.index;
+									const end = start + match[0].length;
+
+									if (position.column >= start + 1 && position.column <= end) {
+										const key = match[1].trim();
+										const param = getParamValue(key);
+
+										if (param) {
+											// base64Data가 없으면 value에서 직접 base64 이미지 감지
+											let base64Data = param.base64Data;
+											let fileType = param.fileType;
+
+											if (!base64Data && param.value && param.value.length >= 100 && /^[A-Za-z0-9+/=]+$/.test(param.value)) {
+												const detectedImageType = detectImageTypeFromBase64(param.value);
+												if (detectedImageType) {
+													base64Data = param.value;
+													fileType = `image/${detectedImageType}`;
+												}
+											}
+
+											// 마우스 위치 가져오기
+											const mouseEvent = e.event.browserEvent;
+
+											// 이미지인 경우 이미지 툴팁 표시
+											if (base64Data) {
+												let mimeType = fileType;
+												if (!mimeType || !mimeType.startsWith('image/')) {
+													const detectedType = detectImageTypeFromBase64(base64Data);
+													mimeType = detectedType ? `image/${detectedType}` : 'image/png';
+												}
+
+												const imageDataUrl = base64Data.startsWith('data:')
+													? base64Data
+													: `data:${mimeType};base64,${base64Data}`;
+
+												showPreviewTooltip(imageDataUrl, 'image', mouseEvent.clientX, mouseEvent.clientY);
+												return;
+											}
+											// 텍스트인 경우 텍스트 툴팁 표시
+											else if (param.type === 'text' && param.value) {
+												showPreviewTooltip(param.value, 'text', mouseEvent.clientX, mouseEvent.clientY);
+												return;
+											}
+										}
+										break;
+									}
 								}
 							}
-						}
-					});
+							hidePreviewTooltip();
+						});
+
+						editor.onMouseLeave(() => {
+							hidePreviewTooltip();
+						});
+
+						// 클릭 이벤트: Ctrl + 클릭 시 플레이스홀더에서 해당 Params로 포커스 이동
+						editor.onMouseDown((e) => {
+							if (e.target.type === monaco.editor.MouseTargetType.CONTENT_TEXT) {
+								const position = e.target.position;
+								if (!position) return;
+
+								// Ctrl 키 (또는 Mac의 경우 Cmd 키) 체크
+								const browserEvent = e.event.browserEvent;
+								const isCtrlClick = browserEvent.ctrlKey || browserEvent.metaKey;
+								if (!isCtrlClick) return;
+
+								const model = editor.getModel();
+								const lineContent = model.getLineContent(position.lineNumber);
+								const placeholderRegex = /\{\{([^}]+)\}\}/g;
+								let match;
+
+								while ((match = placeholderRegex.exec(lineContent)) !== null) {
+									const start = match.index;
+									const end = start + match[0].length;
+
+									if (position.column >= start + 1 && position.column <= end) {
+										const key = match[1].trim();
+
+										// 기본 동작 방지
+										e.event.preventDefault();
+
+										// Params 탭으로 전환
+										switchTab('params');
+
+										// 해당 키를 가진 파라미터 행 찾기
+										setTimeout(() => {
+											const paramRow = Array.from(detailParamList.querySelectorAll('.param-row')).find((row) => {
+												const keyInput = row.querySelector('.param-key');
+												return keyInput && keyInput.value.trim() === key;
+											});
+
+											if (paramRow) {
+												// 해당 행으로 스크롤
+												paramRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+												const typeSelect = paramRow.querySelector('.param-type');
+												const type = typeSelect ? typeSelect.value : 'text';
+
+												// value 입력 필드에 포커스
+												if (type === 'file') {
+													// file 타입인 경우 파일 선택 영역에 포커스 및 테두리 색상
+													const fileInput = paramRow.querySelector('.param-value-file');
+
+													if (fileInput) {
+														// 파일 입력 필드에 테두리 색상 추가
+														fileInput.style.border = '2px solid #3b82f6';
+														fileInput.style.borderRadius = '6px';
+														fileInput.style.outline = 'none';
+
+														// 파일 선택 다이얼로그 열기
+														setTimeout(() => {
+															fileInput.click();
+														}, 100);
+
+														// 2초 후 테두리 색상 제거
+														setTimeout(() => {
+															fileInput.style.border = '';
+															fileInput.style.borderRadius = '';
+															fileInput.style.outline = '';
+														}, 2000);
+													}
+												} else {
+													// text 타입인 경우 텍스트 입력 필드에 포커스
+													const valueInput = paramRow.querySelector('.param-value');
+													if (valueInput) {
+														valueInput.focus();
+														// 텍스트 전체 선택
+														setTimeout(() => {
+															valueInput.select();
+														}, 0);
+													}
+												}
+											}
+										}, 100);
+
+										break;
+									}
+								}
+							}
+						});
+
+						editor.onDidChangeModelContent(() => {
+							const content = editor.getValue();
+							// {{key}} 형태의 플레이스홀더 찾기
+							const placeholderRegex = /\{\{([^}]+)\}\}/g;
+							const foundKeys = new Set();
+							let match;
+
+							while ((match = placeholderRegex.exec(content)) !== null) {
+								const key = match[1].trim();
+								if (key) {
+									foundKeys.add(key);
+								}
+							}
+
+							// 기존 Params 목록의 키와 값 저장
+							const existingParams = new Map();
+							detailParamList.querySelectorAll('.param-row').forEach((row) => {
+								const keyInput = row.querySelector('.param-key');
+								const typeSelect = row.querySelector('.param-type');
+								if (keyInput && keyInput.value.trim()) {
+									const key = keyInput.value.trim();
+									const type = typeSelect ? typeSelect.value : 'text';
+									let value = '';
+
+									if (type === 'file') {
+										const fileInput = row.querySelector('.param-value-file');
+										if (fileInput && fileInput.dataset.base64) {
+											value = fileInput.dataset.base64;
+										} else if (fileInput && fileInput.dataset.fileName) {
+											value = fileInput.dataset.fileName;
+										}
+									} else {
+										const textInput = row.querySelector('.param-value');
+										if (textInput) {
+											value = textInput.value;
+										}
+									}
+
+									existingParams.set(key, { value, type });
+								}
+							});
+
+							// Params 목록 재구성: JSON data에 있는 플레이스홀더만 표시
+							detailParamList.innerHTML = '';
+
+							if (foundKeys.size > 0) {
+								foundKeys.forEach((key) => {
+									// 기존 값이 있으면 유지, 없으면 빈 값으로 생성
+									const existing = existingParams.get(key);
+									const newRow = createParamRowElement({
+										key,
+										value: existing ? existing.value : '',
+										type: existing ? existing.type : 'text'
+									});
+									detailParamList.appendChild(newRow);
+								});
+							} else {
+								// 플레이스홀더가 없으면 빈 행 하나만 추가
+								detailParamList.appendChild(createParamRowElement());
+							}
+						});
+					}
+				}, 100);
+
+				tabsContent.appendChild(paramsPanel);
+				tabsContent.appendChild(headersPanel);
+				tabsContent.appendChild(bodyPanel);
+
+				tabsContainer.appendChild(tabsNav);
+				tabsContainer.appendChild(tabsContent);
+
+				// 탭 전환 기능
+				const switchTab = (tabName) => {
+					activeTab = tabName; // 선택된 탭 저장
+					document.querySelectorAll('.tab-nav-item').forEach((btn) => btn.classList.remove('active'));
+					document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.add('hidden'));
+					document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+					document.getElementById(`tab-panel-${tabName}`).classList.remove('hidden');
 				};
 
-				// 새 요청 폼의 Monaco Editor 초기화
-				const formatJsonInputBtn = document.getElementById('formatJsonInputBtn');
-				if (formatJsonInputBtn) {
-					formatJsonInputBtn.addEventListener('click', async () => {
-						const editor = monacoEditorInstances['jsonInput'];
-						if (editor) {
-							try {
-								editor.getAction('editor.action.formatDocument').run();
-							} catch (error) {
-								alert('포맷팅 중 오류가 발생했습니다.');
-							}
-						}
-					});
-				}
+				paramsTab.addEventListener('click', () => switchTab('params'));
+				headersTab.addEventListener('click', () => switchTab('headers'));
+				bodyTab.addEventListener('click', () => switchTab('body'));
 
-				// 페이지 로드 후 Monaco Editor 초기화
-				window.addEventListener('DOMContentLoaded', async () => {
-					await initMonacoEditor('jsonInput', '');
+				// Title 입력 (상단에 작게 표시)
+				const titleBar = document.createElement('div');
+				titleBar.className = 'title-bar';
+
+				const detailTitle = document.createElement('input');
+				detailTitle.id = 'detailTitle';
+				detailTitle.className = 'title-input';
+				detailTitle.value = current.title;
+				detailTitle.required = true;
+				detailTitle.placeholder = '요청 이름';
+
+				const saveBtn = document.createElement('button');
+				saveBtn.type = 'button';
+				saveBtn.className = 'save-button';
+				saveBtn.textContent = '저장';
+
+				titleBar.appendChild(detailTitle);
+				titleBar.appendChild(saveBtn);
+
+				requestSection.appendChild(titleBar);
+				requestSection.appendChild(requestBar);
+				requestSection.appendChild(tabsContainer);
+
+				// 응답 영역
+				const responsePanel = document.createElement('section');
+				responsePanel.className = 'response-panel';
+				const responseTitle = document.createElement('h3');
+				responseTitle.textContent = '응답';
+				const responseContent = document.createElement('div');
+				responseContent.className = 'response-content';
+				responsePanel.appendChild(responseTitle);
+				responsePanel.appendChild(responseContent);
+
+				renderResponseBox(responseContent, responseCache[current.id], current.id);
+
+				// 사이즈 조절 선 (resizer) 추가
+				const resizer = document.createElement('div');
+				resizer.className = 'section-resizer';
+
+				// 드래그 기능 구현
+				let isResizing = false;
+				let startY = 0;
+				let startRequestTop = 0;
+				let startRequestHeight = 0;
+
+				resizer.addEventListener('mousedown', (e) => {
+					isResizing = true;
+					startY = e.clientY;
+
+					const requestRect = requestSection.getBoundingClientRect();
+					startRequestTop = requestRect.top;
+					startRequestHeight = requestRect.height;
+
+					requestSection.style.transition = 'none';
+					responsePanel.style.transition = 'none';
+
+					document.body.style.cursor = 'ns-resize';
+					document.body.style.userSelect = 'none';
+
+					document.addEventListener('mousemove', handleMouseMove);
+					document.addEventListener('mouseup', handleMouseUp);
+					e.preventDefault();
+					e.stopPropagation();
 				});
 
-				const cancelForm = () => {
-					entryFormSection.classList.add('hidden');
-					resetForm();
-					if (entries.length > 0) {
-						requestList.classList.remove('hidden');
-						emptyState.classList.add('hidden');
-						details.classList.remove('hidden');
-					} else {
-						requestList.classList.add('hidden');
-						emptyState.classList.remove('hidden');
-						details.classList.add('hidden');
+				const handleMouseMove = (e) => {
+					if (!isResizing) return;
+
+					const deltaY = e.clientY - startY;
+					const newRequestHeight = startRequestHeight + deltaY;
+
+					// 최소 높이 제한
+					const minHeight = 200;
+					const detailsHeight = details.offsetHeight;
+					const resizerHeight = resizer.offsetHeight;
+					const maxRequestHeight = detailsHeight - resizerHeight - minHeight;
+
+					if (newRequestHeight >= minHeight && newRequestHeight <= maxRequestHeight) {
+						requestSection.style.height = newRequestHeight + 'px';
+						requestSection.style.flex = '0 0 auto';
+
+						const newResponseHeight = detailsHeight - resizerHeight - newRequestHeight;
+						responsePanel.style.height = newResponseHeight + 'px';
+						responsePanel.style.flex = '0 0 auto';
 					}
 				};
 
-				newRequestBtn.addEventListener('click', () => {
-					entryFormSection.classList.remove('hidden');
-					details.classList.add('hidden');
-					requestList.classList.add('hidden');
-					emptyState.classList.add('hidden');
-					titleInput.focus();
-				});
-
-				const cancelFormBtn = document.getElementById('cancelFormBtn');
-				if (cancelFormBtn) {
-					cancelFormBtn.addEventListener('click', cancelForm);
-				}
-
-				const resetForm = () => {
-					form.reset();
-					initHeaderList(headersList);
-					setMonacoValue('jsonInput', '');
-					titleInput.focus();
+				const handleMouseUp = () => {
+					isResizing = false;
+					requestSection.style.transition = '';
+					responsePanel.style.transition = '';
+					document.body.style.cursor = '';
+					document.body.style.userSelect = '';
+					document.removeEventListener('mousemove', handleMouseMove);
+					document.removeEventListener('mouseup', handleMouseUp);
 				};
 
-				form.addEventListener('submit', (event) => {
-					event.preventDefault();
+				// 저장 기능
+				const saveRequest = () => {
+					const updated = {
+						...current,
+						title: detailTitle.value.trim(),
+						method: detailMethod.value,
+						url: detailUrl.value.trim(),
+						headers: collectHeaderRows(detailHeaderList),
+						params: collectParamRows(detailParamList),
+						apiKey: '', // Body 탭에서 API Key 입력 제거
+						jsonData: getMonacoValue('detailJson').trim(),
+					};
 
-					const title = titleInput.value.trim();
-					const method = methodSelect.value;
-					const url = urlInput.value.trim();
-					const headers = collectHeaderRows(headersList);
-					const headersText = serializeHeaders(headers);
-					const apiKey = ''; // 요청 추가 폼에서는 API Key 입력 제거
-					const jsonData = getMonacoValue('jsonInput').trim();
-
-					if (!title || !method || !url || !jsonData) {
+					if (!updated.title || !updated.method || !updated.url || !updated.jsonData) {
+						alert('모든 필수를 입력해주세요.');
 						return;
 					}
 
-					const newEntry = {
-						id: generateId(),
-						title,
-						method,
-						url,
-						headers,
-						headersText,
-						params: [],
-						apiKey,
-						jsonData,
-					};
-					entries = [...entries, newEntry];
+					const serializedHeaders = serializeHeaders(updated.headers);
+					updated.headersText = serializedHeaders;
+
+					entries = entries.map((entry) => (entry.id === updated.id ? updated : entry));
 					persistEntries();
-					resetForm();
-					entryFormSection.classList.add('hidden');
-					setActive(newEntry.id);
-				});
-
-				clearButton.addEventListener('click', () => {
-					if (!entries.length) return;
-					const confirmed = confirm('저장된 모든 항목을 삭제할까요?');
-					if (!confirmed) return;
-					entries = [];
-					activeId = '';
-					persistEntries();
-					renderTabs();
-					renderDetails();
-					resetForm();
-				});
-
-				const createDefaultEntries = () => {
-					const entries = [];
-
-					// gemini-imagen-4.0 요청
-					const imagenHeaders = [
-						{ key: 'Content-Type', value: 'application/json' },
-						{ key: 'x-goog-api-key', value: 'AIzaSyDiyxD7yZiN5pEMHQuvbZRCuUhPzB2QAR4' }
-					];
-					const imagenParams = [
-						{ key: 'prompt', value: '20대 한국인 여성', type: 'text' }
-					];
-					const imagenJsonData = JSON.stringify({
-						instances: [
-							{
-								prompt: "{{prompt}}"
-							}
-						],
-						parameters: {
-							sampleCount: 4,
-							aspectRatio: "1:1"
-						}
-					}, null, 2);
-
-					entries.push({
-						id: generateId(),
-						title: 'gemini-imagen-4.0',
-						method: 'POST',
-						url: 'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict',
-						headers: imagenHeaders,
-						headersText: serializeHeaders(imagenHeaders),
-						params: imagenParams,
-						apiKey: '',
-						jsonData: imagenJsonData,
-					});
-
-					// gemini-2.5-flash-image 요청
-					const flashHeaders = [
-						{ key: 'Content-Type', value: 'application/json' },
-						{ key: 'x-goog-api-key', value: 'AIzaSyDiyxD7yZiN5pEMHQuvbZRCuUhPzB2QAR4' }
-					];
-					const flashParams = [
-						{ key: 'prompt', value: '여성이 사과를 들고 있는 모습', type: 'text' },
-						{ key: 'img1', value: '', type: 'file' },
-						{ key: 'mimeTpye1', value: 'image/png', type: 'text' }
-					];
-					const flashJsonData = JSON.stringify({
-						contents: [
-							{
-								parts: [
-									{
-										text: "{{prompt}}"
-									},
-									{
-										inlineData: {
-											mimeType: "{{mimeTpye1}}",
-											data: "{{img1}}"
-										}
-									}
-								]
-							}
-						],
-						generationConfig: {
-							imageConfig: {
-								aspectRatio: "1:1"
-							}
-						}
-					}, null, 2);
-
-					entries.push({
-						id: generateId(),
-						title: 'gemini-2.5-flash-image',
-						method: 'POST',
-						url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent',
-						headers: flashHeaders,
-						headersText: serializeHeaders(flashHeaders),
-						params: flashParams,
-						apiKey: '',
-						jsonData: flashJsonData,
-					});
-
-					// gemini-3-pro-preview 요청
-					const pro3Headers = [
-						{ key: 'Content-Type', value: 'application/json' },
-						{ key: 'x-goog-api-key', value: 'AIzaSyDiyxD7yZiN5pEMHQuvbZRCuUhPzB2QAR4' }
-					];
-					const pro3Params = [
-						{ key: 'prompt', value: '안녕하세요', type: 'text' }
-					];
-					const pro3JsonData = JSON.stringify({
-						contents: [
-							{
-								parts: [
-									{
-										text: "{{prompt}}"
-									}
-								]
-							}
-						]
-					}, null, 2);
-
-					entries.push({
-						id: generateId(),
-						title: 'gemini-3-pro-preview',
-						method: 'POST',
-						url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent',
-						headers: pro3Headers,
-						headersText: serializeHeaders(pro3Headers),
-						params: pro3Params,
-						apiKey: '',
-						jsonData: pro3JsonData,
-					});
-
-					// gemini-3-pro-image-preview 요청
-					const pro3ImageHeaders = [
-						{ key: 'Content-Type', value: 'application/json' },
-						{ key: 'x-goog-api-key', value: 'AIzaSyDiyxD7yZiN5pEMHQuvbZRCuUhPzB2QAR4' }
-					];
-					const pro3ImageParams = [
-						{ key: 'prompt', value: '이 이미지를 설명해주세요', type: 'text' },
-						{ key: 'img1', value: '', type: 'file' },
-						{ key: 'mimeTpye1', value: 'image/png', type: 'text' }
-					];
-					const pro3ImageJsonData = JSON.stringify({
-						contents: [
-							{
-								parts: [
-									{
-										text: "{{prompt}}"
-									},
-									{
-										inlineData: {
-											mimeType: "{{mimeTpye1}}",
-											data: "{{img1}}"
-										}
-									}
-								]
-							}
-						]
-					}, null, 2);
-
-					entries.push({
-						id: generateId(),
-						title: 'gemini-3-pro-image-preview',
-						method: 'POST',
-						url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent',
-						headers: pro3ImageHeaders,
-						headersText: serializeHeaders(pro3ImageHeaders),
-						params: pro3ImageParams,
-						apiKey: '',
-						jsonData: pro3ImageJsonData,
-					});
-
-					return entries;
+					setActive(updated.id);
 				};
 
-				const init = async () => {
-					entries = parseEntries().map((entry) => {
-						const normalizedHeaders = Array.isArray(entry.headers)
-							? entry.headers
-							: parseHeadersText(entry.headersText);
-						const serialized = entry.headersText || serializeHeaders(normalizedHeaders);
-						return {
-							...entry,
-							method: entry.method || 'GET',
-							headers: normalizedHeaders,
-							headersText: serialized,
-							params: entry.params || [],
-							apiKey: entry.apiKey || '',
-						};
-					});
+				saveBtn.addEventListener('click', saveRequest);
 
-					// 기본 요청이 없으면 추가
-					if (entries.length === 0) {
-						entries = createDefaultEntries();
-						persistEntries();
+				// 전송 기능
+				sendBtn.addEventListener('click', () => {
+					sendRequest({
+						id: current.id,
+						method: detailMethod.value,
+						url: detailUrl.value.trim(),
+						headersArray: collectHeaderRows(detailHeaderList),
+						apiKey: '', // Body 탭에서 API Key 입력 제거
+						params: collectParamRows(detailParamList),
+						payload: getMonacoValue('detailJson').trim(),
+						buttonEl: sendBtn,
+						responseEl: responseContent,
+					});
+				});
+
+				details.appendChild(requestSection);
+				details.appendChild(resizer);
+				details.appendChild(responsePanel);
+			};
+
+			const enableCodeEditor = (textarea) => {
+				if (!textarea) return;
+
+				const TAB = '    '; // 4 spaces
+				const getLineStart = (text, pos) => {
+					let start = pos;
+					while (start > 0 && text[start - 1] !== '\n') {
+						start--;
+					}
+					return start;
+				};
+
+				const getLineEnd = (text, pos) => {
+					let end = pos;
+					while (end < text.length && text[end] !== '\n') {
+						end++;
+					}
+					return end;
+				};
+
+				const getSelectedLines = (text, start, end) => {
+					const lineStart = getLineStart(text, start);
+					const lineEnd = getLineEnd(text, end);
+					const selectedText = text.substring(lineStart, lineEnd);
+					const lines = selectedText.split('\n');
+					return { lines, lineStart, lineEnd, firstLineStart: lineStart };
+				};
+
+				const indentLines = (text, start, end, indent) => {
+					const { lines, lineStart, lineEnd } = getSelectedLines(text, start, end);
+					const indentedLines = lines.map((line, index) => {
+						if (line.trim() === '' && index < lines.length - 1) return line;
+						return indent + line;
+					});
+					const newText =
+						text.substring(0, lineStart) +
+						indentedLines.join('\n') +
+						text.substring(lineEnd);
+					const cursorOffset = indent.length;
+					return {
+						newText,
+						newStart: start + (start === lineStart ? cursorOffset : 0),
+						newEnd: end + cursorOffset * lines.length,
+					};
+				};
+
+				const unindentLines = (text, start, end) => {
+					const { lines, lineStart, lineEnd } = getSelectedLines(text, start, end);
+					let totalRemoved = 0;
+					const unindentedLines = lines.map((line, index) => {
+						if (line.trim() === '' && index < lines.length - 1) return line;
+						if (line.startsWith(TAB)) {
+							totalRemoved += TAB.length;
+							return line.substring(TAB.length);
+						}
+						if (line.startsWith(' ')) {
+							const spaces = line.match(/^ +/)?.[0] || '';
+							const toRemove = Math.min(spaces.length, 4);
+							totalRemoved += toRemove;
+							return line.substring(toRemove);
+						}
+						return line;
+					});
+					const newText =
+						text.substring(0, lineStart) +
+						unindentedLines.join('\n') +
+						text.substring(lineEnd);
+					return {
+						newText,
+						newStart: Math.max(lineStart, start - (start === lineStart ? TAB.length : 0)),
+						newEnd: Math.max(lineStart, end - totalRemoved),
+					};
+				};
+
+				textarea.addEventListener('keydown', (event) => {
+					const { selectionStart, selectionEnd, value } = textarea;
+					const isMultiLine = selectionStart !== selectionEnd;
+
+					// Tab 키: 들여쓰기
+					if (event.key === 'Tab' && !event.shiftKey) {
+						event.preventDefault();
+						if (isMultiLine) {
+							// 여러 줄 선택 시 모든 줄에 들여쓰기
+							const { newText, newStart, newEnd } = indentLines(value, selectionStart, selectionEnd, TAB);
+							textarea.value = newText;
+							textarea.selectionStart = newStart;
+							textarea.selectionEnd = newEnd;
+						} else {
+							// 단일 커서: 탭 삽입
+							const before = value.slice(0, selectionStart);
+							const after = value.slice(selectionEnd);
+							const nextCursor = selectionStart + TAB.length;
+							textarea.value = `${before}${TAB}${after}`;
+							textarea.selectionStart = textarea.selectionEnd = nextCursor;
+						}
 					}
 
-					activeId = entries[0]?.id ?? '';
-					renderTabs();
-					renderDetails();
-				};
+					// Shift+Tab: 내어쓰기
+					if (event.key === 'Tab' && event.shiftKey) {
+						event.preventDefault();
+						if (isMultiLine) {
+							// 여러 줄 선택 시 모든 줄에서 내어쓰기
+							const { newText, newStart, newEnd } = unindentLines(value, selectionStart, selectionEnd);
+							textarea.value = newText;
+							textarea.selectionStart = newStart;
+							textarea.selectionEnd = newEnd;
+						}
+					}
 
-				// DOMContentLoaded 대신 즉시 실행
-				if (document.readyState === 'loading') {
-					document.addEventListener('DOMContentLoaded', init);
+					// Enter: 자동 들여쓰기 유지
+					if (event.key === 'Enter') {
+						const before = value.substring(0, selectionStart);
+						const lineStart = getLineStart(value, selectionStart);
+						const currentLine = value.substring(lineStart, selectionStart);
+						const indentMatch = currentLine.match(/^(\s*)/);
+						const currentIndent = indentMatch ? indentMatch[1] : '';
+
+						// 중괄호나 대괄호 뒤에서 Enter를 누르면 추가 들여쓰기
+						const lastChar = currentLine.trim().slice(-1);
+						const shouldIndent = lastChar === '{' || lastChar === '[';
+
+						setTimeout(() => {
+							const newPos = textarea.selectionStart;
+							const beforeNew = textarea.value.substring(0, newPos);
+							const afterNew = textarea.value.substring(newPos);
+							const newIndent = shouldIndent ? currentIndent + TAB : currentIndent;
+							textarea.value = beforeNew + newIndent + afterNew;
+							textarea.selectionStart = textarea.selectionEnd = newPos + newIndent.length;
+						}, 0);
+					}
+
+					// Backspace: 탭 단위로 삭제
+					if (event.key === 'Backspace') {
+						if (selectionStart === selectionEnd) {
+							const before = value.substring(0, selectionStart);
+							if (before.endsWith(TAB)) {
+								event.preventDefault();
+								textarea.value =
+									value.substring(0, selectionStart - TAB.length) +
+									value.substring(selectionEnd);
+								textarea.selectionStart = textarea.selectionEnd = selectionStart - TAB.length;
+							}
+						}
+					}
+				});
+			};
+
+			// 새 요청 폼의 Monaco Editor 초기화
+			const formatJsonInputBtn = document.getElementById('formatJsonInputBtn');
+			if (formatJsonInputBtn) {
+				formatJsonInputBtn.addEventListener('click', async () => {
+					const editor = monacoEditorInstances['jsonInput'];
+					if (editor) {
+						try {
+							editor.getAction('editor.action.formatDocument').run();
+						} catch (error) {
+							alert('포맷팅 중 오류가 발생했습니다.');
+						}
+					}
+				});
+			}
+
+			// 페이지 로드 후 Monaco Editor 초기화
+			window.addEventListener('DOMContentLoaded', async () => {
+				await initMonacoEditor('jsonInput', '');
+			});
+
+			const cancelForm = () => {
+				entryFormSection.classList.add('hidden');
+				resetForm();
+				if (entries.length > 0) {
+					requestList.classList.remove('hidden');
+					emptyState.classList.add('hidden');
+					details.classList.remove('hidden');
 				} else {
-					init();
+					requestList.classList.add('hidden');
+					emptyState.classList.remove('hidden');
+					details.classList.add('hidden');
 				}
-			})();
-		</script>
-	</body>
+			};
+
+			newRequestBtn.addEventListener('click', () => {
+				entryFormSection.classList.remove('hidden');
+				details.classList.add('hidden');
+				requestList.classList.add('hidden');
+				emptyState.classList.add('hidden');
+				titleInput.focus();
+			});
+
+			const cancelFormBtn = document.getElementById('cancelFormBtn');
+			if (cancelFormBtn) {
+				cancelFormBtn.addEventListener('click', cancelForm);
+			}
+
+			const resetForm = () => {
+				form.reset();
+				initHeaderList(headersList);
+				setMonacoValue('jsonInput', '');
+				titleInput.focus();
+			};
+
+			form.addEventListener('submit', (event) => {
+				event.preventDefault();
+
+				const title = titleInput.value.trim();
+				const method = methodSelect.value;
+				const url = urlInput.value.trim();
+				const headers = collectHeaderRows(headersList);
+				const headersText = serializeHeaders(headers);
+				const apiKey = ''; // 요청 추가 폼에서는 API Key 입력 제거
+				const jsonData = getMonacoValue('jsonInput').trim();
+
+				if (!title || !method || !url || !jsonData) {
+					return;
+				}
+
+				const newEntry = {
+					id: generateId(),
+					title,
+					method,
+					url,
+					headers,
+					headersText,
+					params: [],
+					apiKey,
+					jsonData,
+				};
+				entries = [...entries, newEntry];
+				persistEntries();
+				resetForm();
+				entryFormSection.classList.add('hidden');
+				setActive(newEntry.id);
+			});
+
+			clearButton.addEventListener('click', () => {
+				if (!entries.length) return;
+				const confirmed = confirm('저장된 모든 항목을 삭제할까요?');
+				if (!confirmed) return;
+				entries = [];
+				activeId = '';
+				persistEntries();
+				renderTabs();
+				renderDetails();
+				resetForm();
+			});
+
+			const createDefaultEntries = () => {
+				const entries = [];
+
+				// gemini-imagen-4.0 요청
+				const imagenHeaders = [
+					{ key: 'Content-Type', value: 'application/json' },
+					{ key: 'x-goog-api-key', value: 'AIzaSyDiyxD7yZiN5pEMHQuvbZRCuUhPzB2QAR4' }
+				];
+				const imagenParams = [
+					{ key: 'prompt', value: '20대 한국인 여성', type: 'text' }
+				];
+				const imagenJsonData = JSON.stringify({
+					instances: [
+						{
+							prompt: "{{prompt}}"
+						}
+					],
+					parameters: {
+						sampleCount: 4,
+						aspectRatio: "1:1"
+					}
+				}, null, 2);
+
+				entries.push({
+					id: generateId(),
+					title: 'gemini-imagen-4.0',
+					method: 'POST',
+					url: 'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict',
+					headers: imagenHeaders,
+					headersText: serializeHeaders(imagenHeaders),
+					params: imagenParams,
+					apiKey: '',
+					jsonData: imagenJsonData,
+				});
+
+				// gemini-2.5-flash-image 요청
+				const flashHeaders = [
+					{ key: 'Content-Type', value: 'application/json' },
+					{ key: 'x-goog-api-key', value: 'AIzaSyDiyxD7yZiN5pEMHQuvbZRCuUhPzB2QAR4' }
+				];
+				const flashParams = [
+					{ key: 'prompt', value: '여성이 사과를 들고 있는 모습', type: 'text' },
+					{ key: 'img1', value: '', type: 'file' },
+					{ key: 'mimeTpye1', value: 'image/png', type: 'text' }
+				];
+				const flashJsonData = JSON.stringify({
+					contents: [
+						{
+							parts: [
+								{
+									text: "{{prompt}}"
+								},
+								{
+									inlineData: {
+										mimeType: "{{mimeTpye1}}",
+										data: "{{img1}}"
+									}
+								}
+							]
+						}
+					],
+					generationConfig: {
+						imageConfig: {
+							aspectRatio: "1:1"
+						}
+					}
+				}, null, 2);
+
+				entries.push({
+					id: generateId(),
+					title: 'gemini-2.5-flash-image',
+					method: 'POST',
+					url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent',
+					headers: flashHeaders,
+					headersText: serializeHeaders(flashHeaders),
+					params: flashParams,
+					apiKey: '',
+					jsonData: flashJsonData,
+				});
+
+				// gemini-3-pro-preview 요청
+				const pro3Headers = [
+					{ key: 'Content-Type', value: 'application/json' },
+					{ key: 'x-goog-api-key', value: 'AIzaSyDiyxD7yZiN5pEMHQuvbZRCuUhPzB2QAR4' }
+				];
+				const pro3Params = [
+					{ key: 'prompt', value: '안녕하세요', type: 'text' }
+				];
+				const pro3JsonData = JSON.stringify({
+					contents: [
+						{
+							parts: [
+								{
+									text: "{{prompt}}"
+								}
+							]
+						}
+					]
+				}, null, 2);
+
+				entries.push({
+					id: generateId(),
+					title: 'gemini-3-pro-preview',
+					method: 'POST',
+					url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent',
+					headers: pro3Headers,
+					headersText: serializeHeaders(pro3Headers),
+					params: pro3Params,
+					apiKey: '',
+					jsonData: pro3JsonData,
+				});
+
+				// gemini-3-pro-image-preview 요청
+				const pro3ImageHeaders = [
+					{ key: 'Content-Type', value: 'application/json' },
+					{ key: 'x-goog-api-key', value: 'AIzaSyDiyxD7yZiN5pEMHQuvbZRCuUhPzB2QAR4' }
+				];
+				const pro3ImageParams = [
+					{ key: 'prompt', value: '이 이미지를 설명해주세요', type: 'text' },
+					{ key: 'img1', value: '', type: 'file' },
+					{ key: 'mimeTpye1', value: 'image/png', type: 'text' }
+				];
+				const pro3ImageJsonData = JSON.stringify({
+					contents: [
+						{
+							parts: [
+								{
+									text: "{{prompt}}"
+								},
+								{
+									inlineData: {
+										mimeType: "{{mimeTpye1}}",
+										data: "{{img1}}"
+									}
+								}
+							]
+						}
+					]
+				}, null, 2);
+
+				entries.push({
+					id: generateId(),
+					title: 'gemini-3-pro-image-preview',
+					method: 'POST',
+					url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent',
+					headers: pro3ImageHeaders,
+					headersText: serializeHeaders(pro3ImageHeaders),
+					params: pro3ImageParams,
+					apiKey: '',
+					jsonData: pro3ImageJsonData,
+				});
+
+				return entries;
+			};
+
+			const init = async () => {
+				entries = parseEntries().map((entry) => {
+					const normalizedHeaders = Array.isArray(entry.headers)
+						? entry.headers
+						: parseHeadersText(entry.headersText);
+					const serialized = entry.headersText || serializeHeaders(normalizedHeaders);
+					return {
+						...entry,
+						method: entry.method || 'GET',
+						headers: normalizedHeaders,
+						headersText: serialized,
+						params: entry.params || [],
+						apiKey: entry.apiKey || '',
+					};
+				});
+
+				// 기본 요청이 없으면 추가
+				if (entries.length === 0) {
+					entries = createDefaultEntries();
+					persistEntries();
+				}
+
+				activeId = entries[0]?.id ?? '';
+				renderTabs();
+				renderDetails();
+			};
+
+			// DOMContentLoaded 대신 즉시 실행
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', init);
+			} else {
+				init();
+			}
+		})();
+	</script>
+</body>
+
 </html>

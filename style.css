@@ -204,7 +204,7 @@ body {
 	flex: 1;
 }
 
-.field + .field {
+.field+.field {
 	margin-top: 18px;
 }
 
@@ -699,7 +699,7 @@ select:focus {
 .response-content {
 	flex: 1;
 	padding: 20px;
-	overflow-y: auto;
+	overflow: hidden;
 	display: flex;
 	gap: 20px;
 	align-items: flex-start;
@@ -713,6 +713,10 @@ select:focus {
 .response-left {
 	flex: 1;
 	min-width: 0;
+	height: 100%;
+	overflow-y: auto;
+	padding-right: 4px;
+	/* 스크롤바 공간 확보 */
 }
 
 .response-meta {
@@ -767,7 +771,9 @@ select:focus {
 .response-images {
 	flex-shrink: 0;
 	width: 400px;
-	margin-bottom: 16px;
+	height: 100%;
+	overflow-y: auto;
+	padding-right: 4px;
 }
 
 .image-gallery {
@@ -870,11 +876,16 @@ pre {
 
 /* 히스토리 스타일 */
 .response-history {
-	margin-bottom: 20px;
-	padding: 16px;
+	/* margin-bottom: 20px; 제거 */
+	/* padding: 16px; */
 	background: #f9fafb;
 	border-radius: 8px;
 	border: 1px solid #e4e7ec;
+	height: 100%;
+	overflow-y: auto;
+	width: 250px;
+	/* 적절한 너비 설정 필요 */
+	flex-shrink: 0;
 }
 
 .response-history h4 {
@@ -888,8 +899,8 @@ pre {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	max-height: 300px;
-	overflow-y: auto;
+	/* max-height: 300px; 제거 */
+	/* overflow-y: auto; 제거 (부모가 스크롤) */
 }
 
 .history-item {
@@ -961,7 +972,7 @@ pre {
 
 .request-data {
 	margin-bottom: 20px;
-	padding: 16px;
+	/* padding: 16px; */
 	background: #f9fafb;
 	border-radius: 8px;
 	border: 1px solid #e4e7ec;
