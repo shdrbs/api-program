@@ -32,8 +32,20 @@
 			{
 				"provider": "github",
 				"owner": "shdrbs",
-				"repo": "api-program"
+				"repo": "api-program",
+				"releaseType": "release",
+				"vPrefixedTagName": false
 			}
-		]
+		],
+		"files": [
+			"main.js",
+			"index.html",
+			"style.css",
+			"assets/**/*",
+			"package.json"
+		],
+		"extraMetadata": {
+			"main": "main.js"
+		}
 	}
 }
