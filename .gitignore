@@ -1,3 +1,7 @@
 node_modules/
 dist/
 .env
+.github/
+index.html
+main.js
+style.css
